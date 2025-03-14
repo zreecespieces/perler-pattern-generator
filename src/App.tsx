@@ -3,11 +3,12 @@ import { ThemeProvider } from "@mui/material"
 import { EditTool, GridSize } from "./types"
 import { AppContainer } from "./styles/styledComponents"
 import { MainContent, ToolsDrawer } from "./components/Layout"
-import usePerlerPattern from "./hooks/usePerlerPattern"
+import { fillArea } from "./utils/gridUtils"
+import { normalizeColors } from "./utils/colorUtils"
+import { usePerlerPattern } from "./hooks/usePerlerPattern"
 import { generatePerlerPattern } from "./utils/imageUtils"
 import theme from "./styles/theme"
 import { exportAsJSON, exportAsPNG } from "./utils/exportUtils"
-import { fillArea } from "./utils/gridUtils"
 
 function App() {
   // Initialize with Paint tool selected by default
@@ -28,7 +29,6 @@ function App() {
     gridSize,
     separateDimensions,
     setSeparateDimensions,
-    clearPattern,
     handleGridSizeChange,
     handleDimensionChange,
     addToHistory,
@@ -81,19 +81,24 @@ function App() {
     });
   };
 
-  // Clear pattern and image (if any)
-  const clearImage = () => {
-    setImage(null);
-    clearPattern(); // This will reset to a blank grid
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
   // Reset grid size back to default 29x29
   const resetGridSize = () => {
     setGridSize({ width: 29, height: 29 });
   };
+
+  // Clear the entire perler pattern grid (all cells to transparent)
+  const clearGrid = useCallback(() => {
+    // Create a new pattern with all cells set to transparent
+    const emptyPattern = Array(gridSize.height)
+      .fill(null)
+      .map(() => Array(gridSize.width).fill('transparent'));
+    
+    setPerlerPattern(emptyPattern);
+    addToHistory(emptyPattern);
+    
+    // Clear the image as well
+    setImage(null);
+  }, [gridSize.height, gridSize.width, setPerlerPattern, addToHistory]);
 
   // Cell interaction handler with deep clone to avoid any reference issues
   const handleCellInteraction = useCallback((y: number, x: number) => {
@@ -144,6 +149,45 @@ function App() {
       setPerlerPattern(newPattern);
       addToHistory(newPattern);
     }
+  }, [perlerPattern, setPerlerPattern, addToHistory]);
+
+  // Normalize the colors in the pattern to reduce similar colors
+  const normalizePatternColors = useCallback((threshold: number = 5) => {
+    // Get all unique colors in the pattern
+    const uniqueColors = new Set<string>();
+    perlerPattern.forEach(row => {
+      row.forEach(cell => {
+        if (cell && cell !== 'transparent') {
+          uniqueColors.add(cell);
+        }
+      });
+    });
+
+    const colors = Array.from(uniqueColors);
+    
+    // Skip if there are very few colors
+    if (colors.length <= 1) return;
+    
+    // Calculate a scaled threshold based on slider value (0-1) to a more useful range (1-20)
+    // This provides a more intuitive slider experience
+    const scaledThreshold = 1 + threshold * 19; // Maps 0-1 to 1-20
+    
+    // Get color mapping from the normalize function
+    const colorMap = normalizeColors(colors, scaledThreshold);
+    
+    // Replace colors in the pattern
+    const newPattern = perlerPattern.map(row => 
+      row.map(cell => {
+        if (cell && cell !== 'transparent' && colorMap[cell]) {
+          return colorMap[cell];
+        }
+        return cell;
+      })
+    );
+    
+    // Update state with new pattern
+    setPerlerPattern(newPattern);
+    addToHistory(newPattern);
   }, [perlerPattern, setPerlerPattern, addToHistory]);
 
   // Mouse event handlers with drag painting support
@@ -258,7 +302,6 @@ function App() {
           fileInputRef={fileInputRef}
           importFileRef={importFileRef}
           onUploadClick={handleImageUpload}
-          onClearImage={clearImage}
           onRegeneratePattern={regeneratePattern}
           onSeparateDimensionsChange={setSeparateDimensions}
           onGridSizeChange={handleGridSizeChange}
@@ -273,6 +316,8 @@ function App() {
           onImportFile={handleImportFile}
           onResetGridSize={resetGridSize}
           onReplaceColor={handleReplaceColor}
+          normalizeColors={normalizePatternColors}
+          onClearGrid={clearGrid}
         />
       </AppContainer>
     </ThemeProvider>

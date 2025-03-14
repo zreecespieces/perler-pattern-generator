@@ -107,7 +107,7 @@ export const PegboardContainer = styled(Paper)(({ theme }) => ({
   backdropFilter: 'blur(4px)',
   borderRadius: 0,
   border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-  maxHeight: '925px',
+  maxHeight: 'fit-content',
   width: '100%',
   boxSizing: 'border-box',
 }));
