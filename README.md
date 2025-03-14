@@ -1,6 +1,12 @@
 # ✨ Instant Perler Pattern ✨
 
-Instantly turn any image into a perler pattern! Plus tons of ease of use features to adjust the image and get the exact pattern you want. Enjoy!
+Instantly turn any image into a perler pattern! Perler beads are a type of bead that can be arranged in a grid and pressed with an iron to create a pattern resembling pixel art.
+
+I built this web application to create a user-friendly interface for converting normal images into perler patterns with features like image upload, direct pattern editing, color replacement, and custom grid size.
+
+The tool is designed to be both beginner-friendly and powerful, allowing users to create custom patterns with ease. This makes it really easy for people to visualize and create custom patterns.
+
+It's common to make perlers and string them into necklaces, bracelets, and other accessories. These are often traded or given away at music festivals.
 
 ## 🎨 Features
 
