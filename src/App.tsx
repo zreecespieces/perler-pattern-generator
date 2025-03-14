@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react'
 import { 
   ThemeProvider, 
   createTheme, 
@@ -309,6 +309,157 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
   },
 }));
 
+// Individual bead component - memoized to prevent unnecessary re-renders
+const Bead = memo(({ 
+  color, 
+  x, 
+  y, 
+  onMouseDown, 
+  onMouseOver 
+}: { 
+  color: string; 
+  x: number; 
+  y: number; 
+  onMouseDown: (y: number, x: number) => void; 
+  onMouseOver: (y: number, x: number) => void; 
+}) => {
+  return (
+    <div
+      data-bead="true"
+      data-color={color}
+      style={{
+        backgroundColor: color !== 'transparent' ? color : '#f9f9f9',
+        border: color !== 'transparent' ? '1px solid rgba(0,0,0,0.1)' : '1px solid #ccc',
+        borderRadius: '50%',
+        boxShadow: color !== 'transparent' ? 'inset 0 0 5px rgba(0,0,0,0.1)' : 'none',
+        aspectRatio: '1/1',
+        width: 20,
+        height: 20,
+      }}
+      onMouseDown={() => onMouseDown(y, x)}
+      onMouseOver={() => onMouseOver(y, x)}
+    />
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison function for memo - only re-render if color changes
+  return prevProps.color === nextProps.color && 
+         (prevProps.onMouseDown === nextProps.onMouseDown) &&
+         (prevProps.onMouseOver === nextProps.onMouseOver);
+});
+
+// Canvas-based grid renderer for very large grids - simplified version without zoom/pan
+const CanvasGrid = ({ 
+  perlerPattern, 
+  onMouseDown, 
+  onMouseOver, 
+  onMouseUp,
+  gridSize
+}: { 
+  perlerPattern: string[][]; 
+  onMouseDown: (y: number, x: number) => void; 
+  onMouseOver: (y: number, x: number) => void; 
+  onMouseUp: () => void;
+  gridSize: { width: number; height: number };
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const beadSize = 20;
+  
+  // Calculate dimensions
+  const totalWidth = gridSize.width * beadSize;
+  const totalHeight = gridSize.height * beadSize;
+  
+  // Draw the grid on canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    // Explicitly set canvas dimensions
+    canvas.width = totalWidth;
+    canvas.height = totalHeight;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw beads
+    perlerPattern.forEach((row, y) => {
+      row.forEach((color, x) => {
+        const cx = x * beadSize + beadSize / 2;
+        const cy = y * beadSize + beadSize / 2;
+        
+        // Background
+        ctx.fillStyle = color !== 'transparent' ? color : '#f9f9f9';
+        ctx.beginPath();
+        ctx.arc(cx, cy, beadSize / 2 - 1, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Border
+        ctx.strokeStyle = color !== 'transparent' ? 'rgba(0,0,0,0.1)' : '#ccc';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+    });
+  }, [perlerPattern, gridSize.width, gridSize.height, totalWidth, totalHeight]);
+  
+  // Handle mouse interactions with canvas
+  const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Calculate grid cell
+    const gridX = Math.floor(x / beadSize);
+    const gridY = Math.floor(y / beadSize);
+    
+    // Only trigger if within bounds
+    if (gridX >= 0 && gridX < gridSize.width && gridY >= 0 && gridY < gridSize.height) {
+      onMouseDown(gridY, gridX);
+    }
+  }, [onMouseDown, gridSize.width, gridSize.height]);
+  
+  const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Calculate grid cell
+    const gridX = Math.floor(x / beadSize);
+    const gridY = Math.floor(y / beadSize);
+    
+    // Only trigger if within bounds
+    if (gridX >= 0 && gridX < gridSize.width && gridY >= 0 && gridY < gridSize.height) {
+      onMouseOver(gridY, gridX);
+    }
+  }, [onMouseOver, gridSize.width, gridSize.height]);
+  
+  return (
+    <div style={{ width: '100%', height: '100%', overflow: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <canvas
+        ref={canvasRef}
+        style={{
+          display: 'block',
+          width: totalWidth + 'px',
+          height: totalHeight + 'px',
+          background: 'rgba(0,0,0,0.2)',
+          border: '1px solid rgba(255,255,255,0.1)',
+        }}
+        onMouseDown={handleCanvasMouseDown}
+        onMouseMove={handleCanvasMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+      />
+    </div>
+  );
+};
+
 function App() {
   const [image, setImage] = useState<string | null>(null);
   const [gridSize, setGridSize] = useState({ width: 29, height: 29 }); // Standard perler pegboard size
@@ -421,24 +572,28 @@ function App() {
   };
   
   // Add pattern to history
-  const addToHistory = (pattern: string[][]) => {
+  const addToHistory = useCallback((pattern: string[][]) => {
     // Create a deep copy of the pattern
     const patternCopy = pattern.map(row => [...row]);
     
     // If we're not at the end of the history, remove future states
-    if (historyIndex < history.length - 1) {
-      setHistory(history.slice(0, historyIndex + 1));
-    }
+    setHistory(prevHistory => {
+      if (historyIndex < prevHistory.length - 1) {
+        const newHistory = prevHistory.slice(0, historyIndex + 1);
+        return [...newHistory, {
+          pattern: patternCopy,
+          timestamp: Date.now()
+        }];
+      } else {
+        return [...prevHistory, {
+          pattern: patternCopy,
+          timestamp: Date.now()
+        }];
+      }
+    });
     
-    // Add new history entry
-    const newEntry: HistoryEntry = {
-      pattern: patternCopy,
-      timestamp: Date.now()
-    };
-    
-    setHistory([...history, newEntry]);
-    setHistoryIndex(historyIndex + 1);
-  };
+    setHistoryIndex(prevIndex => prevIndex + 1);
+  }, [historyIndex]);
   
   // Undo
   const handleUndo = () => {
@@ -574,8 +729,31 @@ function App() {
     }).join('');
   };
   
+  // Flood fill algorithm for paint bucket - memoized to prevent re-renders
+  const fillArea = useCallback((pattern: string[][], y: number, x: number, targetColor: string, replacementColor: string) => {
+    if (targetColor === replacementColor) return;
+    
+    const queue: [number, number][] = [];
+    queue.push([y, x]);
+    
+    while (queue.length > 0) {
+      const [cy, cx] = queue.shift()!;
+      
+      if (cy < 0 || cy >= gridSize.height || cx < 0 || cx >= gridSize.width) continue;
+      if (pattern[cy][cx] !== targetColor) continue;
+      
+      pattern[cy][cx] = replacementColor;
+      
+      // Add adjacent cells to queue (4-way connectivity)
+      queue.push([cy + 1, cx]);
+      queue.push([cy - 1, cx]);
+      queue.push([cy, cx + 1]);
+      queue.push([cy, cx - 1]);
+    }
+  }, [gridSize.width, gridSize.height]);
+  
   // Cell interactions
-  const handleCellClick = (y: number, x: number) => {
+  const handleCellClick = useCallback((y: number, x: number) => {
     // Create a copy of the current pattern
     const newPattern = perlerPattern.map(row => [...row]);
     
@@ -601,54 +779,31 @@ function App() {
     
     setPerlerPattern(newPattern);
     addToHistory(newPattern);
-  };
+  }, [perlerPattern, currentTool, currentColor, addToHistory, fillArea]);
   
   // Mouse handlers for dragging paint/erase
-  const handleMouseDown = (y: number, x: number) => {
+  const handleMouseDownMemo = useCallback((y: number, x: number) => {
     setIsMouseDown(true);
     handleCellClick(y, x);
-  };
+  }, [handleCellClick]);
   
-  const handleMouseUp = () => {
-    setIsMouseDown(false);
-  };
-  
-  const handleMouseOver = (y: number, x: number) => {
+  const handleMouseOverMemo = useCallback((y: number, x: number) => {
     if (isMouseDown && (currentTool === EditTool.PAINT || currentTool === EditTool.ERASE)) {
       handleCellClick(y, x);
     }
-  };
+  }, [isMouseDown, currentTool, handleCellClick]);
   
-  // Flood fill algorithm for paint bucket
-  const fillArea = (pattern: string[][], y: number, x: number, targetColor: string, replacementColor: string) => {
-    if (targetColor === replacementColor) return;
-    
-    const queue: [number, number][] = [];
-    queue.push([y, x]);
-    
-    while (queue.length > 0) {
-      const [cy, cx] = queue.shift()!;
-      
-      if (cy < 0 || cy >= gridSize.height || cx < 0 || cx >= gridSize.width) continue;
-      if (pattern[cy][cx] !== targetColor) continue;
-      
-      pattern[cy][cx] = replacementColor;
-      
-      // Add adjacent cells to queue (4-way connectivity)
-      queue.push([cy + 1, cx]);
-      queue.push([cy - 1, cx]);
-      queue.push([cy, cx + 1]);
-      queue.push([cy, cx - 1]);
-    }
-  };
+  const handleMouseUpMemo = useCallback(() => {
+    setIsMouseDown(false);
+  }, []);
   
   useEffect(() => {
     // Add window event listener for mouse up
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseup', handleMouseUpMemo);
     return () => {
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mouseup', handleMouseUpMemo);
     };
-  }, []);
+  }, [handleMouseUpMemo]);
 
   // Export the pegboard as PNG
   const exportAsPNG = () => {
@@ -782,6 +937,11 @@ function App() {
   // Reference for import file input
   const importFileRef = useRef<HTMLInputElement>(null);
 
+  // Check if grid is large enough to warrant using canvas renderer
+  const isLargeGrid = useMemo(() => {
+    return gridSize.width * gridSize.height > 900; // Use canvas rendering for grids larger than 30x30
+  }, [gridSize.width, gridSize.height]);
+  
   return (
     <ThemeProvider theme={theme}>
       <AppContainer>
@@ -1014,32 +1174,37 @@ function App() {
             <PegboardGrid
               ref={gridRef}
               sx={{
-                gridTemplateColumns: `repeat(${gridSize.width}, 1fr)`,
-                gridTemplateRows: `repeat(${gridSize.height}, 1fr)`,
+                gridTemplateColumns: !isLargeGrid ? `repeat(${gridSize.width}, 1fr)` : 'none',
+                gridTemplateRows: !isLargeGrid ? `repeat(${gridSize.height}, 1fr)` : 'none',
                 width: 'fit-content',
                 height: 'fit-content',
+                display: !isLargeGrid ? 'grid' : 'block'
               }}
             >
-              {perlerPattern.map((row, y) => (
-                row.map((color, x) => (
-                  <Box
-                    key={`${y}-${x}`}
-                    data-bead="true"
-                    data-color={color}
-                    sx={{
-                      backgroundColor: color !== 'transparent' ? color : '#f9f9f9',
-                      border: color !== 'transparent' ? '1px solid rgba(0,0,0,0.1)' : '1px solid #ccc',
-                      borderRadius: '50%',
-                      boxShadow: color !== 'transparent' ? 'inset 0 0 5px rgba(0,0,0,0.1)' : 'none',
-                      aspectRatio: '1/1',
-                      width: 20,
-                      height: 20,
-                    }}
-                    onMouseDown={() => handleMouseDown(y, x)}
-                    onMouseOver={() => handleMouseOver(y, x)}
-                  />
-                ))
-              ))}
+              {!isLargeGrid ? (
+                // Regular DOM-based grid for smaller sizes
+                perlerPattern.map((row, y) => 
+                  row.map((color, x) => (
+                    <Bead
+                      key={`${y}-${x}`}
+                      color={color}
+                      x={x}
+                      y={y}
+                      onMouseDown={handleMouseDownMemo}
+                      onMouseOver={handleMouseOverMemo}
+                    />
+                  ))
+                )
+              ) : (
+                // Canvas-based renderer for larger grids
+                <CanvasGrid 
+                  perlerPattern={perlerPattern}
+                  onMouseDown={handleMouseDownMemo}
+                  onMouseOver={handleMouseOverMemo}
+                  onMouseUp={handleMouseUpMemo}
+                  gridSize={gridSize}
+                />
+              )}
             </PegboardGrid>
             
             <Box sx={{ 
