@@ -30,7 +30,9 @@ const GridSizeControls: React.FC<GridSizeControlsProps> = ({
       display: 'flex', 
       flexDirection: 'column', 
       width: '100%', 
-      gap: 2 
+      gap: 2,
+      overflow: 'hidden', 
+      boxSizing: 'border-box'
     }}>
       <FormControlLabel
         control={
@@ -52,49 +54,59 @@ const GridSizeControls: React.FC<GridSizeControlsProps> = ({
         display: 'flex', 
         flexDirection: { xs: 'column', md: 'row' }, 
         gap: 3, 
-        width: '100%',
+        width: 'auto', 
+        maxWidth: '100%', 
         p: 2,
+        overflow: 'hidden', 
+        borderRadius: 1, 
         backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.4),
-        borderLeft: (theme) => `2px solid ${alpha(theme.palette.primary.main, 0.7)}`
+        borderLeft: (theme) => `2px solid ${alpha(theme.palette.primary.main, 0.7)}`,
+        mr: 0
       }}>
         {!separateDimensions ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
             <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Grid Size:</Typography>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <StyledSlider
-                min={5}
-                max={90}
-                value={Math.max(gridSize.width, gridSize.height)}
-                onChange={(_, value) => onGridSizeChange(value as number)}
-              />
-              <Typography variant="body1" sx={{ minWidth: 80 }}>{gridSize.width}×{gridSize.height}</Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%' }}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <StyledSlider
+                  min={5}
+                  max={90}
+                  value={Math.max(gridSize.width, gridSize.height)}
+                  onChange={(_, value) => onGridSizeChange(value as number)}
+                />
+              </Box>
+              <Typography variant="body1" sx={{ minWidth: 80, width: 80, textAlign: 'right' }}>{gridSize.width}×{gridSize.height}</Typography>
             </Box>
           </Box>
         ) : (
           <>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Grid Width:</Typography>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <StyledSlider
-                  min={5}
-                  max={50}
-                  value={gridSize.width}
-                  onChange={(_, value) => onDimensionChange('width', value as number)}
-                />
-                <Typography variant="body1" sx={{ minWidth: 40 }}>{gridSize.width}</Typography>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%' }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <StyledSlider
+                    min={5}
+                    max={50}
+                    value={gridSize.width}
+                    onChange={(_, value) => onDimensionChange('width', value as number)}
+                  />
+                </Box>
+                <Typography variant="body1" sx={{ minWidth: 40, width: 40, textAlign: 'right' }}>{gridSize.width}</Typography>
               </Box>
             </Box>
             
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Grid Height:</Typography>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <StyledSlider
-                  min={5}
-                  max={50}
-                  value={gridSize.height}
-                  onChange={(_, value) => onDimensionChange('height', value as number)}
-                />
-                <Typography variant="body1" sx={{ minWidth: 40 }}>{gridSize.height}</Typography>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%' }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <StyledSlider
+                    min={5}
+                    max={50}
+                    value={gridSize.height}
+                    onChange={(_, value) => onDimensionChange('height', value as number)}
+                  />
+                </Box>
+                <Typography variant="body1" sx={{ minWidth: 40, width: 40, textAlign: 'right' }}>{gridSize.height}</Typography>
               </Box>
             </Box>
           </>
@@ -103,14 +115,16 @@ const GridSizeControls: React.FC<GridSizeControlsProps> = ({
         {showScaleControl && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
             <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Image Scale:</Typography>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <StyledSlider
-                min={10}
-                max={200}
-                value={scale}
-                onChange={(_, value) => onScaleChange(value as number)}
-              />
-              <Typography variant="body1" sx={{ minWidth: 40 }}>{scale}%</Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%' }}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <StyledSlider
+                  min={10}
+                  max={200}
+                  value={scale}
+                  onChange={(_, value) => onScaleChange(value as number)}
+                />
+              </Box>
+              <Typography variant="body1" sx={{ minWidth: 40, width: 40, textAlign: 'right' }}>{scale}%</Typography>
             </Box>
           </Box>
         )}

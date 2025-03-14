@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import CanvasGrid from '../CanvasGrid';
 import { GridSize, EditTool } from '../../types';
+import { Box } from '@mui/material';
 
 interface PegboardProps {
   perlerPattern: string[][];
@@ -55,19 +56,19 @@ const Pegboard: React.FC<PegboardProps> = ({
     }
   }, [isMouseDown, setIsMouseDown, onMouseUp]);
 
-  // Always use CanvasGrid for consistent rendering and better performance
   return (
-    <div 
+    <Box 
       ref={gridRef}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        // Add some styling for the container
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        borderRadius: '4px',
-        overflow: 'hidden',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        backgroundColor: 'rgba(30, 30, 30, 0.6)'
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+        height: '100%',
+        overflow: 'auto', // Make the inner container scrollable
+        position: 'relative',
       }}
+      onMouseLeave={handleMouseLeave}
     >
       <CanvasGrid
         perlerPattern={perlerPattern}
@@ -77,7 +78,7 @@ const Pegboard: React.FC<PegboardProps> = ({
         onMouseUp={handleMouseUp}
         currentTool={currentTool}
       />
-    </div>
+    </Box>
   );
 };
 

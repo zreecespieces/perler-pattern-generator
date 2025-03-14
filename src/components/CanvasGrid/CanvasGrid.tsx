@@ -29,6 +29,9 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
   // Track if mouse is down
   const isMouseDownRef = useRef<boolean>(false);
   
+  // Store scaling factor for mouse coordinates calculation
+  const scalingFactorRef = useRef<number>(1);
+  
   // Draw the grid with enhanced styling
   const drawGrid = useCallback(() => {
     const canvas = canvasRef.current;
@@ -102,8 +105,9 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
     if (!canvas) return null;
     
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) / pixelSize);
-    const y = Math.floor((e.clientY - rect.top) / pixelSize);
+    const scalingFactor = scalingFactorRef.current;
+    const x = Math.floor(((e.clientX - rect.left) / scalingFactor) / pixelSize);
+    const y = Math.floor(((e.clientY - rect.top) / scalingFactor) / pixelSize);
     
     // Check bounds
     if (x < 0 || x >= gridSize.width || y < 0 || y >= gridSize.height) return null;
@@ -143,25 +147,45 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
     onMouseUp();
   };
   
-  // Initialize canvas and draw initial grid
+  // Initialize canvas size based on grid dimensions and pixel size
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const context = canvas?.getContext('2d');
     
-    // Set canvas size
-    canvas.width = gridSize.width * pixelSize;
-    canvas.height = gridSize.height * pixelSize;
-    
-    // Get context
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    
-    contextRef.current = context;
-    context.imageSmoothingEnabled = false; // Disable anti-aliasing for pixel art
-    
-    // Draw initial grid
-    drawGrid();
-  }, [gridSize, drawGrid]); // Re-initialize when grid size changes
+    if (canvas && context) {
+      // Set canvas dimensions based on grid size
+      const canvasWidth = gridSize.width * pixelSize;
+      const canvasHeight = gridSize.height * pixelSize;
+      
+      // Set actual canvas size in pixels
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      
+      // Set displayed size - allow CSS scaling while maintaining pixel perfectness
+      const maxDisplayWidth = 900; // Increased maximum width to better utilize container
+      const maxDisplayHeight = 800; // Maximum height to prevent overflow
+      
+      // Calculate appropriate scaling to fit within our container
+      const widthScaling = canvasWidth > maxDisplayWidth ? maxDisplayWidth / canvasWidth : 1;
+      const heightScaling = canvasHeight > maxDisplayHeight ? maxDisplayHeight / canvasHeight : 1;
+      
+      // Use the smaller scaling factor to ensure it fits both dimensions
+      const scaling = Math.min(widthScaling, heightScaling);
+      
+      // Store scaling factor for mouse coordinate calculations
+      scalingFactorRef.current = scaling;
+      
+      // Apply CSS sizing (this is separate from the actual canvas pixel dimensions)
+      canvas.style.width = `${canvasWidth * scaling}px`;
+      canvas.style.height = `${canvasHeight * scaling}px`;
+      
+      // Store context for later use
+      contextRef.current = context;
+      
+      // Initial draw
+      drawGrid();
+    }
+  }, [gridSize, drawGrid]);
   
   // Redraw when pattern changes
   useEffect(() => {
@@ -195,7 +219,9 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
         cursor: getCursorStyle(),
         display: 'block', // Removes any extra space below canvas
         boxShadow: '0 0 5px rgba(0, 0, 0, 0.2)', // Subtle shadow
-        borderRadius: '2px' // Slightly rounded corners
+        borderRadius: '2px', // Slightly rounded corners
+        maxWidth: '100%', // Allow scaling
+        height: 'auto' // Maintain aspect ratio
       }}
     />
   );

@@ -35,7 +35,8 @@ function App() {
     undoPattern,
     redoPattern,
     canUndo,
-    canRedo
+    canRedo,
+    setGridSize
   } = usePerlerPattern(initialGridSize);
 
   // Grid ref for capturing as image
@@ -87,6 +88,11 @@ function App() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  // Reset grid size back to default 29x29
+  const resetGridSize = () => {
+    setGridSize({ width: 29, height: 29 });
   };
 
   // Cell interaction handler with deep clone to avoid any reference issues
@@ -154,6 +160,49 @@ function App() {
   const handleExportAsPNG = () => gridRef.current && exportAsPNG(gridRef.current);
   const handleExportAsJSON = () => perlerPattern && exportAsJSON(gridSize, scale, perlerPattern);
 
+  const handleImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const fileContent = e.target?.result as string;
+        const parsed = JSON.parse(fileContent);
+        
+        // Validate the imported data
+        if (!parsed.perlerPattern || !parsed.gridSize) {
+          console.error('Invalid pattern file');
+          return;
+        }
+        
+        // Update grid size first
+        if (parsed.gridSize.width !== gridSize.width || parsed.gridSize.height !== gridSize.height) {
+          setSeparateDimensions(parsed.gridSize.width !== parsed.gridSize.height);
+          // We need to set the grid size directly
+          setGridSize(parsed.gridSize);
+        }
+        
+        // Set the pattern
+        setPerlerPattern(parsed.perlerPattern);
+        addToHistory(parsed.perlerPattern);
+        
+        // Reset scale if available
+        if (parsed.scale) {
+          setScale(parsed.scale);
+        }
+        
+        // Clear any file selection
+        if (importFileRef.current) {
+          importFileRef.current.value = '';
+        }
+      } catch (error) {
+        console.error('Error importing pattern:', error);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <AppContainer>
@@ -200,6 +249,8 @@ function App() {
           onExportPng={handleExportAsPNG}
           onExportJson={handleExportAsJSON}
           onImportClick={() => importFileRef.current?.click()}
+          onImportFile={handleImportFile}
+          onResetGridSize={resetGridSize}
         />
       </AppContainer>
     </ThemeProvider>

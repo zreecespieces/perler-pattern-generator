@@ -6,55 +6,38 @@ import { GridSize } from '../types';
 export const exportAsPNG = (gridRef?: HTMLDivElement | null): void => {
   if (!gridRef) return;
   
-  // Use html-to-image library functionality
-  const grid = gridRef;
+  // Find the canvas element within the grid container
+  const canvas = gridRef.querySelector('canvas');
+  if (!canvas) {
+    console.error('Canvas element not found');
+    return;
+  }
   
-  // Create a canvas element
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+  // Create a new canvas to add padding and background
+  const exportCanvas = document.createElement('canvas');
+  const ctx = exportCanvas.getContext('2d');
   if (!ctx) return;
   
-  // Set canvas size to match the grid
-  const gridRect = grid.getBoundingClientRect();
-  canvas.width = gridRect.width;
-  canvas.height = gridRect.height;
+  // Add some padding around the pattern
+  const padding = 20;
+  exportCanvas.width = canvas.width + (padding * 2);
+  exportCanvas.height = canvas.height + (padding * 2);
   
   // Draw a white background
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
   
-  // Draw each bead
-  const beads = grid.querySelectorAll('[data-bead]');
-  beads.forEach((bead) => {
-    const beadRect = bead.getBoundingClientRect();
-    const color = bead.getAttribute('data-color') || 'transparent';
-    
-    if (color !== 'transparent') {
-      // Calculate relative position
-      const x = beadRect.left - gridRect.left;
-      const y = beadRect.top - gridRect.top;
-      
-      // Draw the bead
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(
-        x + beadRect.width / 2, 
-        y + beadRect.height / 2, 
-        beadRect.width / 2, 
-        0, 
-        Math.PI * 2
-      );
-      ctx.fill();
-      
-      // Draw a subtle border
-      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-  });
+  // Draw the pattern canvas onto our export canvas with padding
+  ctx.drawImage(canvas, padding, padding);
   
-  // Convert canvas to data URL and trigger download
-  const dataUrl = canvas.toDataURL('image/png');
+  // Add a title/caption at the bottom if desired
+  ctx.font = '14px Arial';
+  ctx.fillStyle = '#000000';
+  ctx.textAlign = 'center';
+  ctx.fillText('Instant Perler Pattern', exportCanvas.width / 2, exportCanvas.height - 5);
+  
+  // Convert to data URL and trigger download
+  const dataUrl = exportCanvas.toDataURL('image/png');
   const link = document.createElement('a');
   link.download = 'perler-pattern.png';
   link.href = dataUrl;
@@ -94,28 +77,20 @@ export const exportAsJSON = (
 /**
  * Import a pattern from a JSON file
  */
-export const importFromJSON = (
-  file: File,
-  onImportSuccess: (gridSize: GridSize, scale: number, perlerPattern: string[][], hasImage: boolean) => void,
-  onImportError: (error: Error) => void
-): void => {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const content = e.target?.result as string;
-      const state = JSON.parse(content);
-      
-      // Check if it's a valid state file
-      if (!state.perlerPattern || !state.gridSize) {
-        throw new Error('Invalid state file');
-      }
-      
-      onImportSuccess(state.gridSize, state.scale || 100, state.perlerPattern, state.hasImage || false);
-      
-    } catch (error) {
-      console.error('Error importing state:', error);
-      onImportError(error as Error);
+export const importFromJSON = (fileContent: string): string[][] | null => {
+  try {
+    const state = JSON.parse(fileContent);
+    
+    // Check if it's a valid state file
+    if (!state.perlerPattern || !state.gridSize) {
+      console.error('Invalid pattern file');
+      return null;
     }
-  };
-  reader.readAsText(file);
+    
+    return state.perlerPattern;
+    
+  } catch (error) {
+    console.error('Error importing pattern:', error);
+    return null;
+  }
 };

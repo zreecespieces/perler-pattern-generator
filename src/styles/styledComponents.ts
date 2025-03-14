@@ -36,9 +36,9 @@ export const DrawerHeader = styled(Box)(({ theme }) => ({
 // Main content area
 export const MainContent = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'drawerOpen',
-})<{ drawerOpen: boolean }>(({ theme, drawerOpen }) => ({
+})<{ drawerOpen: boolean }>(({ theme }) => ({
   padding: theme.spacing(3),
-  marginLeft: drawerOpen ? 240 : 0,
+  marginLeft: 0,
   transition: theme.transitions.create('margin', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
@@ -75,6 +75,9 @@ export const ControlPanel = styled(Paper)(({ theme }) => ({
   backdropFilter: 'blur(4px)',
   borderRadius: 0,
   border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+  overflow: 'hidden', // Prevent content overflow
+  maxWidth: '100%', // Ensure it doesn't exceed parent width
+  boxSizing: 'border-box', // Include padding in width calculation
 }));
 
 // Tool button
@@ -104,6 +107,9 @@ export const PegboardContainer = styled(Paper)(({ theme }) => ({
   backdropFilter: 'blur(4px)',
   borderRadius: 0,
   border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+  maxHeight: '925px',
+  width: '100%',
+  boxSizing: 'border-box',
 }));
 
 // Pegboard grid
@@ -138,6 +144,7 @@ export const OriginalImageContainer = styled(Paper)(({ theme }) => ({
 export const StyledSlider = styled(Slider)(({ theme }) => ({
   color: theme.palette.primary.main,
   height: 8,
+  width: '100%', // Ensure the slider takes the appropriate width
   '& .MuiSlider-track': {
     border: 'none',
     boxShadow: `0 0 6px ${theme.palette.primary.main}`,

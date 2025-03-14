@@ -3,6 +3,7 @@ import { Box, Button } from '@mui/material';
 import UploadIcon from '@mui/icons-material/Upload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import BrushIcon from '@mui/icons-material/Brush';
+import RestartAltIcon from '@mui/icons-material/RestartAlt'; 
 import { MainContent as StyledMainContent, SectionTitle, PegboardContainer, OriginalImageContainer, ControlPanel } from '../../styles/styledComponents';
 import { GridSizeControls, ExportControls } from '../Controls';
 import Pegboard from '../Pegboard';
@@ -34,6 +35,8 @@ interface MainContentProps {
   onExportPng: () => void;
   onExportJson: () => void;
   onImportClick: () => void;
+  onImportFile: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onResetGridSize: () => void; 
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -61,11 +64,13 @@ const MainContent: React.FC<MainContentProps> = ({
   onMouseUp,
   onExportPng,
   onExportJson,
-  onImportClick
+  onImportClick,
+  onImportFile,
+  onResetGridSize
 }) => {
   return (
     <StyledMainContent drawerOpen>
-      <SectionTitle variant="h1">Perler Pattern Generator</SectionTitle>
+      <SectionTitle variant="h1">Instant Perler Pattern</SectionTitle>
       
       <ControlPanel>
         <input
@@ -79,9 +84,10 @@ const MainContent: React.FC<MainContentProps> = ({
           type="file"
           accept=".json"
           ref={importFileRef}
+          onChange={onImportFile}
           style={{ display: 'none' }}
         />
-        <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 2, overflow: 'hidden' }}>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
             <Button
               variant="contained"
@@ -98,6 +104,14 @@ const MainContent: React.FC<MainContentProps> = ({
             >
               <DeleteIcon sx={{ mr: 1 }} />
               Clear Grid
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={onResetGridSize}
+            >
+              <RestartAltIcon sx={{ mr: 1 }} />
+              Reset Grid Size
             </Button>
             {image && (
               <Button
