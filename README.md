@@ -39,8 +39,6 @@ npm run dev
 
 4. Open your browser and navigate to `http://localhost:5173`
 
-**Note:** Make sure to run `npm run dev` to start the development server and access the app.
-
 ## 📖 How to Use
 
 1. **Upload an Image**: Click the upload button to convert your image into a pattern
@@ -53,7 +51,7 @@ npm run dev
 ## 🔗 Links
 
 - [GitHub Repository](https://github.com/zreecespieces/perler-pattern-generator)
-- [Zachary Reece&#39;s Website](https://zacharyreece.dev)
+- [Creator&#39;s Website](https://zacharyreece.dev)
 
 ## 📜 License
 
