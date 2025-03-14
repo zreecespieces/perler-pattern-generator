@@ -125,6 +125,27 @@ function App() {
     addToHistory(newPattern);
   }, [perlerPattern, currentTool, currentColor, gridSize, setPerlerPattern, addToHistory]);
 
+  // Replace all instances of one color with another in the pattern
+  const handleReplaceColor = useCallback((oldColor: string, newColor: string) => {
+    if (newColor && oldColor !== newColor) {
+      // Create a deep copy to ensure no reference issues
+      const newPattern = JSON.parse(JSON.stringify(perlerPattern));
+      
+      // Replace all instances of oldColor with newColor
+      for (let y = 0; y < newPattern.length; y++) {
+        for (let x = 0; x < newPattern[y].length; x++) {
+          if (newPattern[y][x] === oldColor) {
+            newPattern[y][x] = newColor;
+          }
+        }
+      }
+      
+      // Update state with new pattern
+      setPerlerPattern(newPattern);
+      addToHistory(newPattern);
+    }
+  }, [perlerPattern, setPerlerPattern, addToHistory]);
+
   // Mouse event handlers with drag painting support
   const handleMouseDown = useCallback((y: number, x: number) => {
     setIsMouseDown(true);
@@ -251,6 +272,7 @@ function App() {
           onImportClick={() => importFileRef.current?.click()}
           onImportFile={handleImportFile}
           onResetGridSize={resetGridSize}
+          onReplaceColor={handleReplaceColor}
         />
       </AppContainer>
     </ThemeProvider>

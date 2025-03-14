@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import CanvasGrid from '../CanvasGrid';
+import ColorLegend from '../ColorLegend';
 import { GridSize, EditTool } from '../../types';
 import { Box } from '@mui/material';
 
@@ -14,6 +15,7 @@ interface PegboardProps {
   onCellClick: (y: number, x: number) => void;
   onMouseOver?: (y: number, x: number) => void;
   onMouseUp?: () => void;
+  onReplaceColor?: (oldColor: string, newColor: string) => void;
 }
 
 const Pegboard: React.FC<PegboardProps> = ({
@@ -25,7 +27,8 @@ const Pegboard: React.FC<PegboardProps> = ({
   setIsMouseDown,
   onCellClick,
   onMouseOver,
-  onMouseUp
+  onMouseUp,
+  onReplaceColor
 }) => {
   // Mouse handlers for dragging paint/erase
   const handleMouseDown = useCallback((y: number, x: number) => {
@@ -56,6 +59,14 @@ const Pegboard: React.FC<PegboardProps> = ({
     }
   }, [isMouseDown, setIsMouseDown, onMouseUp]);
 
+  // When a color is selected for replacement
+  const handleReplaceColor = useCallback((oldColor: string) => {
+    // Open color picker - this will be handled by the parent component
+    if (onReplaceColor) {
+      onReplaceColor(oldColor, ''); // Initially empty new color, will be filled when user selects a color
+    }
+  }, [onReplaceColor]);
+
   return (
     <Box 
       ref={gridRef}
@@ -70,6 +81,12 @@ const Pegboard: React.FC<PegboardProps> = ({
       }}
       onMouseLeave={handleMouseLeave}
     >
+      {/* Color legend showing counts of each color used */}
+      <ColorLegend 
+        perlerPattern={perlerPattern} 
+        onReplaceColor={handleReplaceColor}
+      />
+      
       <CanvasGrid
         perlerPattern={perlerPattern}
         gridSize={gridSize}

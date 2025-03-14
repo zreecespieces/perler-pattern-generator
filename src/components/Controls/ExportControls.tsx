@@ -30,7 +30,7 @@ const ExportControls: React.FC<ExportControlsProps> = ({
         onClick={onImportClick}
         startIcon={<ImportExportIcon />}
       >
-        Import
+        Import Pattern Data
       </Button>
       <Button
         variant="outlined"
@@ -38,7 +38,7 @@ const ExportControls: React.FC<ExportControlsProps> = ({
         onClick={onExportJson}
         startIcon={<SaveIcon />}
       >
-        Export JSON
+        Save Pattern Data
       </Button>
       <Button
         variant="contained"
@@ -46,7 +46,7 @@ const ExportControls: React.FC<ExportControlsProps> = ({
         onClick={onExportPng}
         startIcon={<DownloadIcon />}
       >
-        Download PNG
+        Download Image
       </Button>
     </Box>
   );

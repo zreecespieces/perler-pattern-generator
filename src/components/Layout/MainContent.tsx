@@ -1,13 +1,14 @@
-import React from 'react';
-import { Box, Button } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography } from '@mui/material';
 import UploadIcon from '@mui/icons-material/Upload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import BrushIcon from '@mui/icons-material/Brush';
 import RestartAltIcon from '@mui/icons-material/RestartAlt'; 
-import { MainContent as StyledMainContent, SectionTitle, PegboardContainer, OriginalImageContainer, ControlPanel } from '../../styles/styledComponents';
-import { GridSizeControls, ExportControls } from '../Controls';
+import { MainContent as StyledMainContent, SectionTitle, PegboardContainer, OriginalImageContainer } from '../../styles/styledComponents';
 import Pegboard from '../Pegboard';
+import { GridSizeControls, ExportControls } from '../Controls';
 import { EditTool, GridSize } from '../../types';
+import ColorPicker from '../ColorPicker';
 
 interface MainContentProps {
   image: string | null;
@@ -36,7 +37,8 @@ interface MainContentProps {
   onExportJson: () => void;
   onImportClick: () => void;
   onImportFile: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onResetGridSize: () => void; 
+  onResetGridSize: () => void;
+  onReplaceColor: (oldColor: string, newColor: string) => void;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -66,100 +68,134 @@ const MainContent: React.FC<MainContentProps> = ({
   onExportJson,
   onImportClick,
   onImportFile,
-  onResetGridSize
+  onResetGridSize,
+  onReplaceColor
 }) => {
+  // Get list of colors used in the pattern for the replacement dialog
+  const [openColorDialog, setOpenColorDialog] = useState(false);
+  const [oldColor, setOldColor] = useState('');
+  const [newColor, setNewColor] = useState('#000000');
+  
+  // Get unique colors from pattern
+  const usedColors = React.useMemo(() => {
+    const colors = new Set<string>();
+    perlerPattern.forEach(row => {
+      row.forEach(cell => {
+        if (cell && cell !== 'transparent') {
+          colors.add(cell);
+        }
+      });
+    });
+    return Array.from(colors);
+  }, [perlerPattern]);
+
+  // Handle replacement from the color legend
+  const handleColorSwatch = (oldColorValue: string) => {
+    setOldColor(oldColorValue);
+    setOpenColorDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenColorDialog(false);
+  };
+
+  const handleNewColorSelect = (color: string) => {
+    setNewColor(color);
+  };
+
+  const handleReplaceColor = () => {
+    if (oldColor && newColor) {
+      onReplaceColor(oldColor, newColor);
+      handleCloseDialog();
+    }
+  };
+
   return (
     <StyledMainContent drawerOpen>
       <SectionTitle variant="h1">Instant Perler Pattern</SectionTitle>
-      
-      <ControlPanel>
-        <input
+      {/* Container for the pegboard and controls */}
+      <PegboardContainer>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%' }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Button variant="contained" onClick={() => fileInputRef.current?.click()} startIcon={<UploadIcon />}>
+            Upload Image
+          </Button>
+          <input
           type="file"
           ref={fileInputRef}
-          accept="image/*"
           onChange={onUploadClick}
+          accept="image/*"
           style={{ display: 'none' }}
         />
-        <input
-          type="file"
-          accept=".json"
-          ref={importFileRef}
-          onChange={onImportFile}
-          style={{ display: 'none' }}
-        />
-        <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 2, overflow: 'hidden' }}>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <UploadIcon sx={{ mr: 1 }} />
-              Upload Image
+          
+          {image && (
+            <Button variant="outlined" onClick={onClearImage} startIcon={<DeleteIcon />}>
+              Clear Image
             </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={onClearImage}
-            >
-              <DeleteIcon sx={{ mr: 1 }} />
-              Clear Grid
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={onResetGridSize}
-            >
-              <RestartAltIcon sx={{ mr: 1 }} />
-              Reset Grid Size
-            </Button>
+          )}
             {image && (
               <Button
                 variant="contained"
                 color="secondary"
                 onClick={onRegeneratePattern}
-                disabled={!image}
-                title={!image ? "Upload an image first" : "Regenerate pattern from image"}
+                startIcon={<BrushIcon />}
               >
-                <BrushIcon sx={{ mr: 1 }} />
                 Regenerate Pattern
               </Button>
             )}
+            <Button
+              variant="outlined"
+              onClick={onResetGridSize}
+              startIcon={<RestartAltIcon />}
+            >
+              Reset Grid Size
+            </Button>
           </Box>
 
           <GridSizeControls
             gridSize={gridSize}
-            scale={scale}
-            separateDimensions={separateDimensions}
             onGridSizeChange={onGridSizeChange}
             onDimensionChange={onDimensionChange}
-            onScaleChange={onScaleChange}
+            separateDimensions={separateDimensions}
             onSeparateDimensionsChange={onSeparateDimensionsChange}
-            showScaleControl={!!image}
+            scale={scale}
+            onScaleChange={onScaleChange}
           />
         </Box>
-      </ControlPanel>
-
-      <PegboardContainer>
-        <Pegboard 
-          gridSize={gridSize}
+  
+        {/* Pegboard with color legend */}
+        <Pegboard
           perlerPattern={perlerPattern}
+          gridSize={gridSize}
+          isLargeGrid={isLargeGrid}
+          gridRef={gridRef}
           currentTool={currentTool}
           isMouseDown={isMouseDown}
           setIsMouseDown={setIsMouseDown}
-          gridRef={gridRef}
-          isLargeGrid={isLargeGrid}
           onCellClick={onCellClick}
           onMouseOver={onMouseOver}
           onMouseUp={onMouseUp}
+          onReplaceColor={handleColorSwatch}
         />
         
         <ExportControls
           onExportPng={onExportPng}
           onExportJson={onExportJson}
-          onImportClick={onImportClick}
+          onImportClick={() => {
+            onImportClick();
+            importFileRef.current?.click(); // Handle file input click here
+          }}
         />
       </PegboardContainer>
+      
+      {/* Hidden import file input */}
+      <input
+        type="file"
+        accept=".json"
+        ref={importFileRef}
+        onChange={onImportFile}
+        style={{ display: 'none' }}
+      />
       
       {image && (
         <OriginalImageContainer>
@@ -167,6 +203,40 @@ const MainContent: React.FC<MainContentProps> = ({
           <img src={image} alt="Uploaded" />
         </OriginalImageContainer>
       )}
+
+      {/* Color replacement dialog */}
+      <Dialog open={openColorDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Replace Color</DialogTitle>
+        <DialogContent sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 300 }}>
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>Current Color:</Typography>
+            <Box sx={{ 
+              width: 50, 
+              height: 50, 
+              backgroundColor: oldColor,
+              border: '1px solid rgba(0,0,0,0.2)',
+              borderRadius: '4px'
+            }} />
+          </Box>
+          
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>New Color:</Typography>
+            <ColorPicker 
+              currentColor={newColor} 
+              beadColors={[...usedColors, '#FFFFFF', '#000000', '#FF0000', '#00FF00', '#0000FF']} 
+              onColorSelect={handleNewColorSelect} 
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleReplaceColor} color="primary" variant="contained">
+            Replace
+          </Button>
+        </DialogActions>
+      </Dialog>
     </StyledMainContent>
   );
 };
