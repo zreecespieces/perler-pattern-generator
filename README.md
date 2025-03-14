@@ -51,7 +51,7 @@ npm run dev
 ## 🔗 Links
 
 - [GitHub Repository](https://github.com/zreecespieces/perler-pattern-generator)
-- [Creator&#39;s Website](https://zacharyreece.dev)
+- [My Website](https://zacharyreece.dev)
 
 ## 📜 License
 
