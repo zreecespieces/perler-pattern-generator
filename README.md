@@ -1,70 +1,60 @@
-# Perler Bead Pattern Generator
+# ✨ Instant Perler Pattern ✨
 
-An interactive web application that converts your uploaded images into perler bead patterns. Perfect for crafters who enjoy creating pixel art with perler beads!
+Instantly turn any image into a perler pattern! Plus tons of ease of use features to adjust the image and get the exact pattern you want. Enjoy!
 
-![Perler Bead Pattern Generator](https://example.com/screenshot.png)
+## 🎨 Features
 
-## Features
+- **🖼️ Image Upload**: Convert any image into a Perler bead pattern instantly
+- **🔄 Direct Pattern Editing**: Create and edit patterns directly without uploading an image
+- **🎭 Color Replacement**: Change any color in your pattern with our intuitive replacement tool
+- **🧩 Custom Grid Size**: Customize your pattern size to fit any pegboard
+- **📊 Color Normalization**: Simplify your pattern by reducing similar colors
+- **💾 Export Options**: Save your patterns as PNG images or JSON files
+- **🔍 Original Image Preview**: See your source image alongside the generated pattern
+- **↩️ Undo/Redo**: Made a mistake? No problem! Full undo/redo support
+- **🎯 Precise Controls**: Adjust dimensions independently for the perfect pattern size
 
-- Upload any image to generate a perler bead pattern
-- Automatically converts your image to a grid-based perler bead pattern
-- Preview the original image alongside the generated pattern
-- Clear and start over with a new image
-
-## How Perler Beads Work
-
-Perler beads (also known as Hama beads or melty beads) are small, colorful plastic beads that are arranged on a pegboard to create designs. Once the design is complete, it's ironed to fuse the beads together. This app helps you convert regular images into pixel art patterns that can be recreated with perler beads.
-
-## Tech Stack
-
-- React 18
-- TypeScript
-- Vite
-- HTML Canvas API for image processing
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v14 or higher)
-- npm or yarn
+## 🚀 Getting Started
 
 ### Installation
 
 1. Clone the repository
+
 ```bash
-git clone https://github.com/yourusername/perler-generator.git
-cd perler-generator
+git clone https://github.com/zreecespieces/perler-pattern-generator.git
+cd perler-pattern-generator
 ```
 
 2. Install dependencies
+
 ```bash
 npm install
-# or
-yarn
 ```
 
 3. Start the development server
+
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
 4. Open your browser and navigate to `http://localhost:5173`
 
-## Usage
+**Note:** Make sure to run `npm run dev` to start the development server and access the app.
 
-1. Click the "Upload Image" button and select an image from your device
-2. The app will process the image and display a perler bead pattern
-3. Use the pattern as a reference for placing perler beads on a pegboard
-4. Click "Clear Image" to start over with a new image
+## 📖 How to Use
 
-## License
+1. **Upload an Image**: Click the upload button to convert your image into a pattern
+2. **Direct Drawing**: Use the brush tool to create or modify your pattern
+3. **Replace Colors**: Select any color in your pattern and replace it with a new one
+4. **Adjust Size**: Change the grid size to match your pegboard dimensions
+5. **Normalize Colors**: Simplify your pattern by reducing similar colors
+6. **Export Your Creation**: Save your pattern as a PNG image or JSON file
+
+## 🔗 Links
+
+- [GitHub Repository](https://github.com/zreecespieces/perler-pattern-generator)
+- [Zachary Reece&#39;s Website](https://zacharyreece.dev)
+
+## 📜 License
 
 MIT
-
-## Acknowledgements
-
-- Built with [Vite](https://vitejs.dev/)
-- Uses [React](https://reactjs.org/)

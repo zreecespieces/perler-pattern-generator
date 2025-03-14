@@ -47,6 +47,7 @@ const GridSizeControls: React.FC<GridSizeControlsProps> = ({
             }}
           />
         }
+        sx={{ width: "20rem" }}
         label="Control width and height separately"
       />
       
