@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography } from "@mui/material";
+import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, useMediaQuery } from "@mui/material";
 
 interface ColorReplacementDialogProps {
   open: boolean;
@@ -22,8 +22,9 @@ const ColorReplacementDialog: React.FC<ColorReplacementDialogProps> = ({
   onReplaceColor,
   onNewColorChange
 }) => {
+  const isMobile = useMediaQuery(theme => theme.breakpoints.down("md"))
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={onClose} fullScreen={isMobile}>
       <DialogTitle>Replace Color</DialogTitle>
       <DialogContent sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2, minWidth: 350 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>

@@ -110,6 +110,10 @@ export const PegboardContainer = styled(Paper)(({ theme }) => ({
   maxHeight: 'fit-content',
   width: '100%',
   boxSizing: 'border-box',
+  [theme.breakpoints.down('md')]: {
+    padding: theme.spacing(2),
+    overflow: 'hidden',
+  },
 }));
 
 // Pegboard grid

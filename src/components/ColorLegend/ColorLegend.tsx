@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Typography, Tooltip } from '@mui/material';
+import { Box, Typography, Tooltip, useMediaQuery } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
 interface ColorLegendProps {
@@ -13,6 +13,7 @@ interface ColorCount {
 }
 
 const ColorLegend: React.FC<ColorLegendProps> = ({ perlerPattern, onReplaceColor }) => {
+  const isMobile = useMediaQuery(theme => theme.breakpoints.down("md"))
   // Count the occurrences of each color in the pattern
   const colorCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -48,7 +49,7 @@ const ColorLegend: React.FC<ColorLegendProps> = ({ perlerPattern, onReplaceColor
   return (
     <Box
       sx={{
-        position: 'absolute',
+        position: !isMobile ? 'absolute' : undefined,
         top: 10,
         right: 10,
         width: '150px',

@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import CanvasGrid from '../CanvasGrid';
 import ColorLegend from '../ColorLegend';
 import { GridSize, EditTool } from '../../types';
-import { Box } from '@mui/material';
+import { Box, useMediaQuery } from '@mui/material';
 
 interface PegboardProps {
   perlerPattern: string[][];
@@ -28,36 +28,41 @@ const Pegboard: React.FC<PegboardProps> = ({
   onCellClick,
   onMouseOver,
   onMouseUp,
-  onReplaceColor
+  onReplaceColor,
 }) => {
+  const isMobile = useMediaQuery(theme => theme.breakpoints.down("md"))
   // Mouse handlers for dragging paint/erase
   const handleMouseDown = useCallback((y: number, x: number) => {
+    if (isMobile) return
     setIsMouseDown(true);
     onCellClick(y, x);
-  }, [setIsMouseDown, onCellClick]);
+  }, [setIsMouseDown, onCellClick, isMobile]);
 
   const handleMouseOver = useCallback((y: number, x: number) => {
+    if (isMobile) return
     if (onMouseOver) {
       onMouseOver(y, x);
     }
-  }, [onMouseOver]);
+  }, [onMouseOver, isMobile]);
 
   const handleMouseUp = useCallback(() => {
+    if (isMobile) return
     setIsMouseDown(false);
     if (onMouseUp) {
       onMouseUp();
     }
-  }, [setIsMouseDown, onMouseUp]);
+  }, [setIsMouseDown, onMouseUp, isMobile]);
   
   // Add mouse leave handler to handle cases where cursor leaves the pegboard
   const handleMouseLeave = useCallback(() => {
+    if (isMobile) return
     if (isMouseDown) {
       setIsMouseDown(false);
       if (onMouseUp) {
         onMouseUp();
       }
     }
-  }, [isMouseDown, setIsMouseDown, onMouseUp]);
+  }, [isMouseDown, setIsMouseDown, onMouseUp, isMobile]);
 
   // When a color is selected for replacement
   const handleReplaceColor = useCallback((oldColor: string) => {
@@ -72,6 +77,7 @@ const Pegboard: React.FC<PegboardProps> = ({
       ref={gridRef}
       sx={{
         display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
         justifyContent: 'center',
         alignItems: 'center',
         width: '100%',
@@ -81,11 +87,6 @@ const Pegboard: React.FC<PegboardProps> = ({
       }}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Color legend showing counts of each color used */}
-      <ColorLegend 
-        perlerPattern={perlerPattern} 
-        onReplaceColor={handleReplaceColor}
-      />
       
       <CanvasGrid
         perlerPattern={perlerPattern}
@@ -95,6 +96,17 @@ const Pegboard: React.FC<PegboardProps> = ({
         onMouseUp={handleMouseUp}
         currentTool={currentTool}
       />
+
+      {/* Color legend showing counts of each color used */}
+      {isMobile && (
+        <>
+          <br />
+          <ColorLegend 
+            perlerPattern={perlerPattern} 
+            onReplaceColor={handleReplaceColor}
+          />
+        </>
+      )}
     </Box>
   );
 };

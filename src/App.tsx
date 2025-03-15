@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react"
-import { ThemeProvider } from "@mui/material"
+import useMediaQuery from "@mui/material/useMediaQuery"
 import { EditTool, GridSize } from "./types"
 import { AppContainer } from "./styles/styledComponents"
 import { MainContent, ToolsDrawer } from "./components/Layout"
@@ -7,7 +7,6 @@ import { fillArea } from "./utils/gridUtils"
 import { normalizeColors } from "./utils/colorUtils"
 import { usePerlerPattern } from "./hooks/usePerlerPattern"
 import { generatePerlerPattern } from "./utils/imageUtils"
-import theme from "./styles/theme"
 import { exportAsJSON, exportAsPNG } from "./utils/exportUtils"
 
 function App() {
@@ -19,6 +18,9 @@ function App() {
   const [scale, setScale] = useState(100); // Scale percentage (100% = full size)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
+
+  // Theme and responsive design
+  const isMobile = useMediaQuery(theme => theme.breakpoints.down('lg'));
 
   // Start with a reasonably sized grid for direct painting
   const initialGridSize: GridSize = { width: 29, height: 29 };
@@ -269,25 +271,25 @@ function App() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
       <AppContainer>
-        <ToolsDrawer
-          currentTool={currentTool}
-          currentColor={currentColor}
-          beadColors={[
-            '#FFFFFF', '#000000', '#FF0000', '#00FF00', '#0000FF', 
-            '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080',
-            '#008000', '#800000', '#808000', '#008080', '#FFC0CB',
-            '#A52A2A', '#FF7F50', '#FFD700', '#808080', '#C0C0C0'
-          ]}
-          onToolChange={setCurrentTool}
-          onColorSelect={setCurrentColor}
-          onUndo={undoPattern}
-          onRedo={redoPattern}
-          canUndo={canUndo}
-          canRedo={canRedo}
-        />
-
+        {!isMobile && (
+          <ToolsDrawer
+            currentTool={currentTool}
+            currentColor={currentColor}
+            beadColors={[
+              '#FFFFFF', '#000000', '#FF0000', '#00FF00', '#0000FF', 
+              '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080',
+              '#008000', '#800000', '#808000', '#008080', '#FFC0CB',
+              '#A52A2A', '#FF7F50', '#FFD700', '#808080', '#C0C0C0'
+            ]}
+            onToolChange={setCurrentTool}
+            onColorSelect={setCurrentColor}
+            onUndo={undoPattern}
+            onRedo={redoPattern}
+            canUndo={canUndo}
+            canRedo={canRedo}
+          />
+        )}
         <MainContent
           image={image}
           gridSize={gridSize}
@@ -320,7 +322,6 @@ function App() {
           onClearGrid={clearGrid}
         />
       </AppContainer>
-    </ThemeProvider>
   );
 }
 

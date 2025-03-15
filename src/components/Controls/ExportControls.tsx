@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button } from '@mui/material';
+import { Button, Stack, useMediaQuery } from '@mui/material';
 import ImportExportIcon from '@mui/icons-material/ImportExport';
 import SaveIcon from '@mui/icons-material/Save';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -10,23 +10,21 @@ interface ExportControlsProps {
   onImportClick: () => void;
 }
 
-const ExportControls: React.FC<ExportControlsProps> = ({
-  onExportPng,
-  onExportJson,
-  onImportClick
-}) => {
+const ExportControls: React.FC<ExportControlsProps> = ({ onExportPng, onExportJson, onImportClick }) => {
+  const isMobile = useMediaQuery(theme => theme.breakpoints.down('md'));
   return (
-    <Box sx={{ 
-      display: 'flex', 
+    <Stack direction={{ xs: 'column', md: 'row' }} sx={{ 
       justifyContent: 'flex-end', 
       gap: 2, 
       mt: 2,
+      width: isMobile ? '100%' : 'fit-content',
       borderTop: (theme) => `1px solid ${theme.palette.primary.main}30`,
       pt: 2
     }}>
       <Button
         variant="outlined"
         color="primary"
+        fullWidth={isMobile}
         onClick={onImportClick}
         startIcon={<ImportExportIcon />}
       >
@@ -35,6 +33,7 @@ const ExportControls: React.FC<ExportControlsProps> = ({
       <Button
         variant="outlined"
         color="primary"
+        fullWidth={isMobile}
         onClick={onExportJson}
         startIcon={<SaveIcon />}
       >
@@ -43,12 +42,13 @@ const ExportControls: React.FC<ExportControlsProps> = ({
       <Button
         variant="contained"
         color="primary"
+        fullWidth={isMobile}
         onClick={onExportPng}
         startIcon={<DownloadIcon />}
       >
         Download Image
       </Button>
-    </Box>
+    </Stack>
   );
 };
 
