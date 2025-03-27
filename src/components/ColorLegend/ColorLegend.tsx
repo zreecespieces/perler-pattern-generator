@@ -49,7 +49,7 @@ const ColorLegend: React.FC<ColorLegendProps> = ({ perlerPattern, onReplaceColor
   return (
     <Box
       sx={{
-        position: !isMobile ? 'absolute' : undefined,
+        position: "absolute",
         top: 10,
         right: 10,
         width: '150px',

@@ -177,6 +177,7 @@ const MainContent: React.FC<MainContentProps> = ({
             onSeparateDimensionsChange={onSeparateDimensionsChange}
             scale={scale}
             onScaleChange={onScaleChange}
+            showScaleControl={true}
           />
         </Box>
 
@@ -193,6 +194,7 @@ const MainContent: React.FC<MainContentProps> = ({
           onMouseOver={onMouseOver}
           onMouseUp={onMouseUp}
           onReplaceColor={handleColorSwatch}
+          scale={scale}
         />
 
         <ExportControls

@@ -8,6 +8,7 @@ interface CanvasGridProps {
   onMouseUp: () => void;
   gridSize: GridSize;
   currentTool: EditTool;
+  scale?: number;
 }
 
 // Canvas-based grid renderer with improved visuals for all grid sizes
@@ -17,7 +18,8 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
   onMouseOver, 
   onMouseUp,
   gridSize,
-  currentTool
+  currentTool,
+  scale = 100
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -32,18 +34,28 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
   // Store scaling factor for mouse coordinates calculation
   const scalingFactorRef = useRef<number>(1);
   
-  // Draw the grid with enhanced styling
+  // Update the drawGrid function to account for the new scaling approach
   const drawGrid = useCallback(() => {
     const canvas = canvasRef.current;
     const context = contextRef.current;
     if (!canvas || !context) return;
     
     // Clear canvas
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.clearRect(0, 0, canvas.width / (scale / 100), canvas.height / (scale / 100));
+    
+    // Save the current context state before any transformations
+    context.save();
+    
+    // Reset any existing transform before applying a new one
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    
+    // Apply the user scaling to the context
+    const userScaling = scale / 100;
+    context.scale(userScaling, userScaling);
     
     // Draw grid background with a subtle pattern
     context.fillStyle = '#2a2a2a';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillRect(0, 0, gridSize.width * pixelSize, gridSize.height * pixelSize);
     
     // Draw subtle background pattern
     context.fillStyle = 'rgba(255, 255, 255, 0.03)';
@@ -86,7 +98,7 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
     for (let y = 0; y <= gridSize.height; y++) {
       context.beginPath();
       context.moveTo(0, y * pixelSize);
-      context.lineTo(canvas.width, y * pixelSize);
+      context.lineTo(gridSize.width * pixelSize, y * pixelSize);
       context.stroke();
     }
     
@@ -94,10 +106,13 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
     for (let x = 0; x <= gridSize.width; x++) {
       context.beginPath();
       context.moveTo(x * pixelSize, 0);
-      context.lineTo(x * pixelSize, canvas.height);
+      context.lineTo(x * pixelSize, gridSize.height * pixelSize);
       context.stroke();
     }
-  }, [perlerPattern, gridSize]);
+    
+    // Restore the context state
+    context.restore();
+  }, [perlerPattern, gridSize, scale]);
   
   // Handle mouse events
   const getCellCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -105,9 +120,22 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
     if (!canvas) return null;
     
     const rect = canvas.getBoundingClientRect();
-    const scalingFactor = scalingFactorRef.current;
-    const x = Math.floor(((e.clientX - rect.left) / scalingFactor) / pixelSize);
-    const y = Math.floor(((e.clientY - rect.top) / scalingFactor) / pixelSize);
+    const scaling = scalingFactorRef.current; // This is displayWidth / canvasWidth
+    
+    // First calculate position in display space
+    const displayX = e.clientX - rect.left;
+    const displayY = e.clientY - rect.top;
+    
+    // Then convert to canvas space accounting for the scaling
+    // We divide by scaling because the canvas is actually smaller/larger than its display size
+    const canvasX = displayX / scaling;
+    const canvasY = displayY / scaling;
+    
+    // Finally convert to grid cell coordinates (taking into account the context scaling)
+    // Since the context is scaled by userScaling, we need to divide by it to get actual pixel coordinates
+    const userScaling = scale / 100;
+    const x = Math.floor(canvasX / (pixelSize * userScaling));
+    const y = Math.floor(canvasY / (pixelSize * userScaling));
     
     // Check bounds
     if (x < 0 || x >= gridSize.width || y < 0 || y >= gridSize.height) return null;
@@ -147,7 +175,7 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
     onMouseUp();
   };
   
-  // Initialize canvas size based on grid dimensions and pixel size
+  // Initialize canvas and handle scaling
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext('2d');
@@ -157,35 +185,50 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
       const canvasWidth = gridSize.width * pixelSize;
       const canvasHeight = gridSize.height * pixelSize;
       
-      // Set actual canvas size in pixels
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-      
-      // Set displayed size - allow CSS scaling while maintaining pixel perfectness
-      const maxDisplayWidth = 900; // Increased maximum width to better utilize container
-      const maxDisplayHeight = 800; // Maximum height to prevent overflow
+      // Calculate display dimensions that won't change with scaling
+      // (we'll maintain these visual dimensions regardless of scale)
+      const maxDisplayWidth = 500; // Fixed visual width
+      const maxDisplayHeight = 500; // Fixed visual height
       
       // Calculate appropriate scaling to fit within our container
+      // This ratio ensures the canvas fits properly in its visual dimensions
       const widthScaling = canvasWidth > maxDisplayWidth ? maxDisplayWidth / canvasWidth : 1;
       const heightScaling = canvasHeight > maxDisplayHeight ? maxDisplayHeight / canvasHeight : 1;
+      const baseScaling = Math.min(widthScaling, heightScaling);
       
-      // Use the smaller scaling factor to ensure it fits both dimensions
-      const scaling = Math.min(widthScaling, heightScaling);
+      // The display size remains constant
+      const displayWidth = canvasWidth * baseScaling;
+      const displayHeight = canvasHeight * baseScaling;
+      
+      // Scale the actual canvas size based on the user's scale input
+      // This means at 100% scale, the canvas is exactly the size needed for the normal view
+      // At larger scales, the canvas is larger but still displayed at the same visual size
+      // At smaller scales, the canvas is smaller but still displayed at the same visual size
+      const userScaling = scale / 100; // Convert percentage to decimal
+      
+      // Set actual internal canvas pixel dimensions (for rendering)
+      // Scaled by the user's preference
+      canvas.width = Math.round(canvasWidth * userScaling);
+      canvas.height = Math.round(canvasHeight * userScaling);
+      
+      // The visible display size remains fixed regardless of scale
+      canvas.style.width = `${displayWidth}px`;
+      canvas.style.height = `${displayHeight}px`;
       
       // Store scaling factor for mouse coordinate calculations
-      scalingFactorRef.current = scaling;
-      
-      // Apply CSS sizing (this is separate from the actual canvas pixel dimensions)
-      canvas.style.width = `${canvasWidth * scaling}px`;
-      canvas.style.height = `${canvasHeight * scaling}px`;
+      // This is the ratio between canvas internal size and displayed size
+      scalingFactorRef.current = displayWidth / canvas.width;
       
       // Store context for later use
       contextRef.current = context;
       
+      // We need to adjust the drawing context to account for scaling
+      context.scale(userScaling, userScaling);
+      
       // Initial draw
       drawGrid();
     }
-  }, [gridSize, drawGrid]);
+  }, [gridSize, drawGrid, scale]);
   
   // Redraw when pattern changes
   useEffect(() => {
@@ -209,21 +252,33 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
   };
   
   return (
-    <canvas
-      ref={canvasRef}
-      onMouseDown={handleCanvasMouseDown}
-      onMouseMove={handleCanvasMouseMove}
-      onMouseUp={handleCanvasMouseUp}
-      onMouseLeave={handleCanvasMouseLeave}
-      style={{ 
-        cursor: getCursorStyle(),
-        display: 'block', // Removes any extra space below canvas
-        boxShadow: '0 0 5px rgba(0, 0, 0, 0.2)', // Subtle shadow
-        borderRadius: '2px', // Slightly rounded corners
-        maxWidth: '100%', // Allow scaling
-        height: 'auto' // Maintain aspect ratio
-      }}
-    />
+    <div style={{
+      width: '100%', // Fill available width in parent container
+      height: '100%', // Fill available height in parent container
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      overflow: 'hidden',
+      position: 'relative',
+    }}>
+      <canvas
+        ref={canvasRef}
+        onMouseDown={handleCanvasMouseDown}
+        onMouseMove={handleCanvasMouseMove}
+        onMouseUp={handleCanvasMouseUp}
+        onMouseLeave={handleCanvasMouseLeave}
+        style={{ 
+          cursor: getCursorStyle(),
+          display: 'block',
+          boxShadow: '0 0 5px rgba(0, 0, 0, 0.2)',
+          borderRadius: '2px',
+          objectFit: 'contain', // Maintains aspect ratio while filling container
+          maxWidth: '100%',
+          maxHeight: '100%',
+          margin: 'auto',
+        }}
+      />
+    </div>
   );
 };
 

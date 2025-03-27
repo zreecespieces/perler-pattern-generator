@@ -16,6 +16,7 @@ interface PegboardProps {
   onMouseOver?: (y: number, x: number) => void;
   onMouseUp?: () => void;
   onReplaceColor?: (oldColor: string, newColor: string) => void;
+  scale?: number;
 }
 
 const Pegboard: React.FC<PegboardProps> = ({
@@ -29,6 +30,7 @@ const Pegboard: React.FC<PegboardProps> = ({
   onMouseOver,
   onMouseUp,
   onReplaceColor,
+  scale = 100,
 }) => {
   const isMobile = useMediaQuery(theme => theme.breakpoints.down("md"))
   // Mouse handlers for dragging paint/erase
@@ -82,11 +84,12 @@ const Pegboard: React.FC<PegboardProps> = ({
         alignItems: 'center',
         width: '100%',
         height: '100%',
-        overflow: 'auto', // Make the inner container scrollable
+        overflow: 'hidden', // Changed from 'auto' to 'hidden'
         position: 'relative',
       }}
       onMouseLeave={handleMouseLeave}
     >
+      <ColorLegend perlerPattern={perlerPattern} onReplaceColor={handleReplaceColor} />
       
       <CanvasGrid
         perlerPattern={perlerPattern}
@@ -95,16 +98,14 @@ const Pegboard: React.FC<PegboardProps> = ({
         onMouseOver={handleMouseOver}
         onMouseUp={handleMouseUp}
         currentTool={currentTool}
+        scale={scale}
       />
 
       {/* Color legend showing counts of each color used */}
       {isMobile && (
         <>
           <br />
-          <ColorLegend 
-            perlerPattern={perlerPattern} 
-            onReplaceColor={handleReplaceColor}
-          />
+          <ColorLegend perlerPattern={perlerPattern} onReplaceColor={handleReplaceColor} />
         </>
       )}
     </Box>

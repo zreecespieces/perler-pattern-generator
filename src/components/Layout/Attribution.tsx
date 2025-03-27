@@ -3,6 +3,7 @@ import CodeIcon from "@mui/icons-material/Code"
 import GitHubIcon from "@mui/icons-material/GitHub"
 
 export function Attribution({ fullWidth }: { fullWidth?: boolean }) {
+  return null
     return <Box
           sx={{
             display: 'flex',
