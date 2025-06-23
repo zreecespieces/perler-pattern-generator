@@ -70,8 +70,9 @@ const GridSizeControls: React.FC<GridSizeControlsProps> = ({
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%' }}>
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <StyledSlider
-                  min={5}
-                  max={90}
+                  min={29}
+                  max={87}
+                  step={29}
                   value={Math.max(gridSize.width, gridSize.height)}
                   onChange={(_, value) => onGridSizeChange(value as number)}
                 />
@@ -86,8 +87,9 @@ const GridSizeControls: React.FC<GridSizeControlsProps> = ({
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%' }}>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <StyledSlider
-                    min={5}
-                    max={50}
+                    min={29}
+                    max={58}
+                    step={29}
                     value={gridSize.width}
                     onChange={(_, value) => onDimensionChange('width', value as number)}
                   />
@@ -101,8 +103,9 @@ const GridSizeControls: React.FC<GridSizeControlsProps> = ({
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%' }}>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <StyledSlider
-                    min={5}
-                    max={50}
+                    min={29}
+                    max={58}
+                    step={29}
                     value={gridSize.height}
                     onChange={(_, value) => onDimensionChange('height', value as number)}
                   />
