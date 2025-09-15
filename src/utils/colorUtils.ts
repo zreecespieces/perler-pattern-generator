@@ -1,7 +1,7 @@
 // Convert hex color to RGB components
 export const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
   // Remove # if present
-  hex = hex.replace(/^#/, '');
+  hex = hex.replace(/^#/, "");
 
   // Parse the RGB components
   const r = parseInt(hex.slice(0, 2), 16);
@@ -38,11 +38,11 @@ export const rgbToLab = ({ r, g, b }: { r: number; g: number; b: number }): { l:
   const yNorm = y / yRef;
   const zNorm = z / zRef;
 
-  const fx = xNorm > 0.008856 ? Math.pow(xNorm, 1/3) : (7.787 * xNorm) + (16/116);
-  const fy = yNorm > 0.008856 ? Math.pow(yNorm, 1/3) : (7.787 * yNorm) + (16/116);
-  const fz = zNorm > 0.008856 ? Math.pow(zNorm, 1/3) : (7.787 * zNorm) + (16/116);
+  const fx = xNorm > 0.008856 ? Math.pow(xNorm, 1 / 3) : 7.787 * xNorm + 16 / 116;
+  const fy = yNorm > 0.008856 ? Math.pow(yNorm, 1 / 3) : 7.787 * yNorm + 16 / 116;
+  const fz = zNorm > 0.008856 ? Math.pow(zNorm, 1 / 3) : 7.787 * zNorm + 16 / 116;
 
-  const l = (116 * fy) - 16;
+  const l = 116 * fy - 16;
   const a = 500 * (fx - fy);
   const bValue = 200 * (fy - fz);
 
@@ -62,14 +62,47 @@ export const colorDistance = (color1: string, color2: string): number => {
   return Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB);
 };
 
-// Convert RGB back to hex format
-export const rgbToHex = ({ r, g, b }: { r: number; g: number; b: number }): string => {
-  const toHex = (c: number) => {
-    const hex = Math.round(c).toString(16);
-    return hex.length === 1 ? '0' + hex : hex;
-  };
+/**
+ * Convert RGB values to hex color string
+ */
+export const rgbToHex = (r: number, g: number, b: number): string => {
+  return (
+    "#" +
+    [r, g, b]
+      .map((x) => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+      })
+      .join("")
+  );
+};
 
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+// Helper: RGB to HSV (h in [0,360), s,v in [0,1])
+export const rgbToHsv = (r: number, g: number, b: number) => {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0;
+  const s = max === 0 ? 0 : d / max;
+  const v = max;
+  if (d !== 0) {
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h *= 60;
+  }
+  return { h, s, v };
 };
 
 // Normalize colors by clustering similar colors together
@@ -99,14 +132,14 @@ export const normalizeColors = (colors: string[], threshold: number = 5): { [key
 
   // For each cluster, select a representative color
   const colorMap: { [key: string]: string } = {};
-  
-  clusters.forEach(cluster => {
+
+  clusters.forEach((cluster) => {
     // Choose the first color in the cluster as the representative
     // Could be improved by choosing the most central color in the cluster
     const representative = cluster[0];
-    
+
     // Map all colors in the cluster to the representative
-    cluster.forEach(color => {
+    cluster.forEach((color) => {
       colorMap[color] = representative;
     });
   });

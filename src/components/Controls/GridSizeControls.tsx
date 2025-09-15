@@ -11,6 +11,7 @@ interface GridSizeControlsProps {
   onGridSizeChange: (value: number) => void;
   onDimensionChange: (dimension: 'width' | 'height', value: number) => void;
   onScaleChange: (value: number | number[]) => void;
+  onScaleCommit?: (value: number) => void;
   onSeparateDimensionsChange: (checked: boolean) => void;
   showScaleControl?: boolean;
 }
@@ -22,6 +23,7 @@ const GridSizeControls: React.FC<GridSizeControlsProps> = ({
   onGridSizeChange,
   onDimensionChange,
   onScaleChange,
+  onScaleCommit,
   onSeparateDimensionsChange,
   showScaleControl = false
 }) => {
@@ -126,6 +128,7 @@ const GridSizeControls: React.FC<GridSizeControlsProps> = ({
                   max={200}
                   value={scale}
                   onChange={(_, value) => onScaleChange(value as number)}
+                  onChangeCommitted={(_, value) => onScaleCommit && onScaleCommit(value as number)}
                 />
               </Box>
               <Typography variant="body1" sx={{ minWidth: 40, width: 40, textAlign: 'right' }}>{scale}%</Typography>

@@ -37,6 +37,7 @@ interface MainContentProps {
   onGridSizeChange: (value: number) => void;
   onDimensionChange: (dimension: "width" | "height", value: number) => void;
   onScaleChange: (value: number | number[]) => void;
+  onScaleCommit?: (value: number) => void;
   onCellClick: (y: number, x: number) => void;
   onMouseOver?: (y: number, x: number) => void;
   onMouseUp?: () => void;
@@ -80,6 +81,7 @@ const MainContent: React.FC<MainContentProps> = ({
   onReplaceColor,
   onClearGrid,
   normalizeColors,
+  onScaleCommit,
 }) => {
   // Get list of colors used in the pattern for the replacement dialog
   const [openColorDialog, setOpenColorDialog] = useState(false);
@@ -195,6 +197,7 @@ const MainContent: React.FC<MainContentProps> = ({
             onSeparateDimensionsChange={onSeparateDimensionsChange}
             scale={scale}
             onScaleChange={onScaleChange}
+            onScaleCommit={onScaleCommit}
             showScaleControl={true}
           />
         </Box>

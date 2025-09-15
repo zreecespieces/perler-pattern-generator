@@ -18,6 +18,7 @@ function App() {
   const [scale, setScale] = useState(100); // Scale percentage (100% = full size)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
+  const scaleDebounceRef = useRef<number | undefined>(undefined);
 
   // Theme and responsive design
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("lg"));
@@ -69,8 +70,29 @@ function App() {
   const handleScaleChange = (newValue: number | number[]) => {
     const newScale = parseInt(newValue.toString());
     setScale(newScale);
+    // Debounce heavy generation while dragging the slider
+    if (scaleDebounceRef.current !== undefined) {
+      window.clearTimeout(scaleDebounceRef.current);
+    }
+    const gridArea = gridSize.width * gridSize.height;
+    // For large grids, avoid any generation during drag; wait for onChangeCommitted
+    if (gridArea >= 2500) {
+      return;
+    }
+    const delay = 120;
+    scaleDebounceRef.current = window.setTimeout(() => {
+      if (image) {
+        generatePattern(image, newScale);
+      }
+    }, delay);
+  };
+
+  // Generate immediately when the user releases the slider thumb
+  const handleScaleCommit = (value: number) => {
+    const committed = Number(value);
+    setScale(committed);
     if (image) {
-      generatePattern(image, newScale);
+      generatePattern(image, committed);
     }
   };
 
@@ -347,6 +369,7 @@ function App() {
         onGridSizeChange={handleGridSizeChange}
         onDimensionChange={handleDimensionChange}
         onScaleChange={handleScaleChange}
+        onScaleCommit={handleScaleCommit}
         onCellClick={handleMouseDown}
         onMouseOver={handleMouseOver}
         onMouseUp={handleMouseUp}
