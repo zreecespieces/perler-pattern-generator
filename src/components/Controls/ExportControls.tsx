@@ -3,14 +3,16 @@ import { Button, Stack, useMediaQuery } from '@mui/material';
 import ImportExportIcon from '@mui/icons-material/ImportExport';
 import SaveIcon from '@mui/icons-material/Save';
 import DownloadIcon from '@mui/icons-material/Download';
+import MenuIcon from '@mui/icons-material/Menu';
 
 interface ExportControlsProps {
   onExportPng: () => void;
   onExportJson: () => void;
   onImportClick: () => void;
+  onOpenTools?: () => void;
 }
 
-const ExportControls: React.FC<ExportControlsProps> = ({ onExportPng, onExportJson, onImportClick }) => {
+const ExportControls: React.FC<ExportControlsProps> = ({ onExportPng, onExportJson, onImportClick, onOpenTools }) => {
   const isMobile = useMediaQuery(theme => theme.breakpoints.down('md'));
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} sx={{ 
@@ -21,6 +23,17 @@ const ExportControls: React.FC<ExportControlsProps> = ({ onExportPng, onExportJs
       borderTop: (theme) => `1px solid ${theme.palette.primary.main}30`,
       pt: 2
     }}>
+      {isMobile && (
+        <Button
+          variant="outlined"
+          color="primary"
+          fullWidth
+          onClick={onOpenTools}
+          startIcon={<MenuIcon />}
+        >
+          Open Tools
+        </Button>
+      )}
       <Button
         variant="outlined"
         color="primary"

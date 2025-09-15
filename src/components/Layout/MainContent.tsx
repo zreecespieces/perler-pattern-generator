@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Button, useMediaQuery, IconButton } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
+import FitScreenIcon from "@mui/icons-material/FitScreen";
 import UploadIcon from "@mui/icons-material/Upload";
 import BrushIcon from "@mui/icons-material/Brush";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
@@ -125,6 +126,12 @@ const MainContent: React.FC<MainContentProps> = ({
     }
   };
 
+  const handleResetScale = () => {
+    // Reset scale to 100% and commit the change
+    onScaleChange(100);
+    if (onScaleCommit) onScaleCommit(100);
+  };
+
   // Color normalization is now applied automatically during generation in the worker.
 
   return (
@@ -166,6 +173,9 @@ const MainContent: React.FC<MainContentProps> = ({
             <Button fullWidth={isMobile} variant="outlined" onClick={onResetGridSize} startIcon={<RestartAltIcon />}>
               Reset Grid Size
             </Button>
+            <Button fullWidth={isMobile} variant="outlined" onClick={handleResetScale} startIcon={<FitScreenIcon />}>
+              Reset Image Scale
+            </Button>
             <Button fullWidth={isMobile} variant="outlined" onClick={onClearGrid} startIcon={<ClearIcon />}>
               Clear Grid
             </Button>
@@ -201,7 +211,12 @@ const MainContent: React.FC<MainContentProps> = ({
           scale={scale}
         />
 
-        <ExportControls onExportPng={onExportPng} onExportJson={onExportJson} onImportClick={onImportClick} />
+        <ExportControls
+          onExportPng={onExportPng}
+          onExportJson={onExportJson}
+          onImportClick={onImportClick}
+          onOpenTools={onOpenTools}
+        />
         {isMobile && (
           <>
             <br />
