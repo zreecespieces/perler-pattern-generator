@@ -55,11 +55,23 @@ const ColorReplacementDialog: React.FC<ColorReplacementDialogProps> = ({
               sx={{
                 width: 48,
                 height: 48,
-                backgroundColor: newColor,
                 border: "1px solid rgba(0,0,0,0.2)",
                 borderRadius: "4px",
+                backgroundImage:
+                  "linear-gradient(45deg, #ccc 25%, transparent 25%)," +
+                  "linear-gradient(-45deg, #ccc 25%, transparent 25%)," +
+                  "linear-gradient(45deg, transparent 75%, #ccc 75%)," +
+                  "linear-gradient(-45deg, transparent 75%, #ccc 75%)",
+                backgroundSize: "12px 12px",
+                backgroundPosition: "0 0, 0 6px, 6px -6px, -6px 0px",
+                position: "relative",
+                overflow: "hidden",
               }}
-            />
+            >
+              {newColor !== 'transparent' && (
+                <Box sx={{ width: "100%", height: "100%", backgroundColor: newColor }} />
+              )}
+            </Box>
           </Box>
         </Box>
 
@@ -67,6 +79,35 @@ const ColorReplacementDialog: React.FC<ColorReplacementDialogProps> = ({
           <Typography variant="subtitle1" gutterBottom>
             Select replacement color:
           </Typography>
+
+          {/* Quick action: Transparent (Delete) */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+              Special
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+              <Box
+                role="button"
+                aria-label="Transparent (delete)"
+                onClick={() => onNewColorChange('transparent')}
+                sx={{
+                  width: 30,
+                  height: 30,
+                  border: newColor === 'transparent' ? "2px solid #000" : "1px solid rgba(0,0,0,0.2)",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  backgroundImage:
+                    "linear-gradient(45deg, #ccc 25%, transparent 25%)," +
+                    "linear-gradient(-45deg, #ccc 25%, transparent 25%)," +
+                    "linear-gradient(45deg, transparent 75%, #ccc 75%)," +
+                    "linear-gradient(-45deg, transparent 75%, #ccc 75%)",
+                  backgroundSize: "12px 12px",
+                  backgroundPosition: "0 0, 0 6px, 6px -6px, -6px 0px",
+                }}
+              />
+              <Typography variant="body2">Transparent (delete)</Typography>
+            </Box>
+          </Box>
 
           {/* Tabs layout for different color groups */}
           <Box sx={{ mt: 2 }}>
@@ -138,7 +179,7 @@ const ColorReplacementDialog: React.FC<ColorReplacementDialogProps> = ({
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <input
                   type="color"
-                  value={newColor}
+                  value={newColor === 'transparent' ? '#000000' : newColor}
                   onChange={(e) => onNewColorChange(e.target.value)}
                   style={{ 
                     width: '40px', 
