@@ -193,10 +193,7 @@ const MainContent: React.FC<MainContentProps> = ({
         <ExportControls
           onExportPng={onExportPng}
           onExportJson={onExportJson}
-          onImportClick={() => {
-            onImportClick();
-            importFileRef.current?.click(); // Handle file input click here
-          }}
+          onImportClick={onImportClick}
         />
         {isMobile && (
           <>

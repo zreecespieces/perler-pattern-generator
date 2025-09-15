@@ -1,9 +1,59 @@
 import { GridSize } from "../types";
 
+// Minimal types for the File System Access API (only what's needed here)
+type FSWritable = { write: (data: Blob) => Promise<void>; close: () => Promise<void> };
+type FSFileHandle = { createWritable: () => Promise<FSWritable> };
+type SaveFilePickerAcceptType = { description?: string; accept: Record<string, string[]> };
+type SaveFilePickerOptions = {
+  suggestedName?: string;
+  startIn?: "downloads" | "documents" | "desktop" | "pictures";
+  types?: SaveFilePickerAcceptType[];
+};
+type FSShowSaveFilePicker = (options: SaveFilePickerOptions) => Promise<FSFileHandle>;
+
+// Helper: save a Blob using the File System Access API when available, with a fallback to browser download
+const saveBlob = async (
+  blob: Blob,
+  suggestedName: string,
+  mimeDescription: string,
+  mimeType: string,
+  extension: string
+): Promise<void> => {
+  const w = window as unknown as { showSaveFilePicker?: FSShowSaveFilePicker };
+  if (typeof w.showSaveFilePicker === "function") {
+    try {
+      const handle = await w.showSaveFilePicker({
+        suggestedName,
+        startIn: "downloads",
+        types: [
+          {
+            description: mimeDescription,
+            accept: { [mimeType]: [extension] },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch {
+      // User canceled or API failed; fall back below
+    }
+  }
+
+  // Fallback: trigger a browser download to the default downloads location
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = suggestedName;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 /**
  * Export the current pattern as a PNG image
  */
-export const exportAsPNG = (gridRef?: HTMLDivElement | null): void => {
+export const exportAsPNG = async (gridRef?: HTMLDivElement | null): Promise<void> => {
   if (!gridRef) return;
 
   // Find the canvas element within the grid container
@@ -40,18 +90,33 @@ export const exportAsPNG = (gridRef?: HTMLDivElement | null): void => {
     exportCanvas.height - 5
   );
 
-  // Convert to data URL and trigger download
-  const dataUrl = exportCanvas.toDataURL("image/png");
-  const link = document.createElement("a");
-  link.download = "perler-pattern.png";
-  link.href = dataUrl;
-  link.click();
+  // Convert to Blob and prompt user for save location/name
+  const blob: Blob | null = await new Promise((resolve) =>
+    exportCanvas.toBlob((b) => resolve(b), "image/png")
+  );
+  if (blob) {
+    await saveBlob(blob, "perler-pattern.png", "PNG Image", "image/png", ".png");
+  } else {
+    // Fallback if toBlob is unavailable
+    const dataUrl = exportCanvas.toDataURL("image/png");
+    await saveBlob(
+      new Blob([dataUrl.split(",")[1] || ""], { type: "image/png" }),
+      "perler-pattern.png",
+      "PNG Image",
+      "image/png",
+      ".png"
+    );
+  }
 };
 
 /**
  * Export the current pattern as a JSON file
  */
-export const exportAsJSON = (gridSize: GridSize, scale: number, perlerPattern: string[][]): void => {
+export const exportAsJSON = async (
+  gridSize: GridSize,
+  scale: number,
+  perlerPattern: string[][]
+): Promise<void> => {
   // Create state object
   const state = {
     gridSize,
@@ -62,16 +127,9 @@ export const exportAsJSON = (gridSize: GridSize, scale: number, perlerPattern: s
   // Convert to JSON
   const json = JSON.stringify(state, null, 2);
 
-  // Create download link
+  // Save using file picker (with fallback)
   const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "perler-pattern.json";
-  a.click();
-
-  // Clean up
-  URL.revokeObjectURL(url);
+  await saveBlob(blob, "perler-pattern.json", "JSON File", "application/json", ".json");
 };
 
 /**
