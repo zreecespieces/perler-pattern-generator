@@ -8,3 +8,26 @@ export const BEAD_COLORS = [
   { name: "dark grey", hex: "#4B4951" },
   { name: "black", hex: "#000000" },
 ];
+
+export const toolColors = [
+  "#FFFFFF",
+  "#000000",
+  "#FF0000",
+  "#00FF00",
+  "#0000FF",
+  "#FFFF00",
+  "#FF00FF",
+  "#00FFFF",
+  "#FFA500",
+  "#800080",
+  "#008000",
+  "#800000",
+  "#808000",
+  "#008080",
+  "#FFC0CB",
+  "#A52A2A",
+  "#FF7F50",
+  "#FFD700",
+  "#808080",
+  "#C0C0C0",
+];

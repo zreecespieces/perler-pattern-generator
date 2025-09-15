@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, useMediaQuery } from "@mui/material";
+import { Box, Button, useMediaQuery, IconButton } from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
 import UploadIcon from "@mui/icons-material/Upload";
 import BrushIcon from "@mui/icons-material/Brush";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
@@ -47,6 +48,7 @@ interface MainContentProps {
   onResetGridSize: () => void;
   onReplaceColor: (oldColor: string, newColor: string) => void;
   onClearGrid: () => void;
+  onOpenTools?: () => void;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -79,6 +81,7 @@ const MainContent: React.FC<MainContentProps> = ({
   onReplaceColor,
   onClearGrid,
   onScaleCommit,
+  onOpenTools,
 }) => {
   // Get list of colors used in the pattern for the replacement dialog
   const [openColorDialog, setOpenColorDialog] = useState(false);
@@ -127,7 +130,15 @@ const MainContent: React.FC<MainContentProps> = ({
   return (
     <StyledMainContent drawerOpen>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0 }}>
-        <SectionTitle variant="h1">Instant Perler Pattern</SectionTitle>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <SectionTitle variant="h1">Instant Perler Pattern</SectionTitle>
+
+          {isMobile && (
+            <IconButton aria-label="Open tools" onClick={onOpenTools} size="small">
+              <MenuIcon sx={{ fontSize: 36 }} />
+            </IconButton>
+          )}
+        </Box>
         {!isMobile && <Attribution />}
       </Box>
       {/* Container for the pegboard and controls */}
@@ -190,11 +201,7 @@ const MainContent: React.FC<MainContentProps> = ({
           scale={scale}
         />
 
-        <ExportControls
-          onExportPng={onExportPng}
-          onExportJson={onExportJson}
-          onImportClick={onImportClick}
-        />
+        <ExportControls onExportPng={onExportPng} onExportJson={onExportJson} onImportClick={onImportClick} />
         {isMobile && (
           <>
             <br />

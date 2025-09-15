@@ -7,6 +7,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { EditTool, GridSize } from "./types";
 import { AppContainer } from "./styles/styledComponents";
 import { MainContent, ToolsDrawer } from "./components/Layout";
+import { toolColors } from "./utils/beadColors";
 
 function App() {
   // Initialize with Paint tool selected by default
@@ -20,7 +21,8 @@ function App() {
   const scaleDebounceRef = useRef<number | undefined>(undefined);
 
   // Theme and responsive design
-  const isMobile = useMediaQuery((theme) => theme.breakpoints.down("lg"));
+  const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
+  const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
 
   // Start with a reasonably sized grid for direct painting
   const initialGridSize: GridSize = { width: 29, height: 29 };
@@ -187,7 +189,6 @@ function App() {
     [perlerPattern, setPerlerPattern, addToHistory]
   );
 
-
   // Mouse event handlers with drag painting support
   const handleMouseDown = useCallback(
     (y: number, x: number) => {
@@ -278,28 +279,23 @@ function App() {
         <ToolsDrawer
           currentTool={currentTool}
           currentColor={currentColor}
-          beadColors={[
-            "#FFFFFF",
-            "#000000",
-            "#FF0000",
-            "#00FF00",
-            "#0000FF",
-            "#FFFF00",
-            "#FF00FF",
-            "#00FFFF",
-            "#FFA500",
-            "#800080",
-            "#008000",
-            "#800000",
-            "#808000",
-            "#008080",
-            "#FFC0CB",
-            "#A52A2A",
-            "#FF7F50",
-            "#FFD700",
-            "#808080",
-            "#C0C0C0",
-          ]}
+          beadColors={toolColors}
+          onToolChange={setCurrentTool}
+          onColorSelect={setCurrentColor}
+          onUndo={undoPattern}
+          onRedo={redoPattern}
+          canUndo={canUndo}
+          canRedo={canRedo}
+        />
+      )}
+      {isMobile && (
+        <ToolsDrawer
+          variant="temporary"
+          open={mobileToolsOpen}
+          onClose={() => setMobileToolsOpen(false)}
+          currentTool={currentTool}
+          currentColor={currentColor}
+          beadColors={toolColors}
           onToolChange={setCurrentTool}
           onColorSelect={setCurrentColor}
           onUndo={undoPattern}
@@ -338,6 +334,7 @@ function App() {
         onResetGridSize={resetGridSize}
         onReplaceColor={handleReplaceColor}
         onClearGrid={clearGrid}
+        onOpenTools={() => setMobileToolsOpen(true)}
       />
     </AppContainer>
   );

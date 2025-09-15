@@ -174,6 +174,55 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
     isMouseDownRef.current = false;
     onMouseUp();
   };
+
+  // Touch support (mobile)
+  const getCellCoordinatesFromTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas || e.touches.length === 0) return null;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaling = scalingFactorRef.current;
+    const touch = e.touches[0];
+
+    const displayX = touch.clientX - rect.left;
+    const displayY = touch.clientY - rect.top;
+
+    const canvasX = displayX / scaling;
+    const canvasY = displayY / scaling;
+
+    const userScaling = scale / 100;
+    const x = Math.floor(canvasX / (pixelSize * userScaling));
+    const y = Math.floor(canvasY / (pixelSize * userScaling));
+
+    if (x < 0 || x >= gridSize.width || y < 0 || y >= gridSize.height) return null;
+    return { x, y };
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const coords = getCellCoordinatesFromTouch(e);
+    if (!coords) return;
+    isMouseDownRef.current = true;
+    lastCellRef.current = coords;
+    onMouseDown(coords.y, coords.x);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const coords = getCellCoordinatesFromTouch(e);
+    if (!coords) return;
+    if (lastCellRef.current?.x === coords.x && lastCellRef.current?.y === coords.y) return;
+    lastCellRef.current = coords;
+    if (isMouseDownRef.current) {
+      onMouseOver(coords.y, coords.x);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    isMouseDownRef.current = false;
+    onMouseUp();
+  };
   
   // Initialize canvas and handle scaling
   useEffect(() => {
@@ -267,6 +316,9 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
         onMouseMove={handleCanvasMouseMove}
         onMouseUp={handleCanvasMouseUp}
         onMouseLeave={handleCanvasMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         style={{ 
           cursor: getCursorStyle(),
           display: 'block',
@@ -276,6 +328,7 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
           maxWidth: '100%',
           maxHeight: '100%',
           margin: 'auto',
+          touchAction: 'none',
         }}
       />
     </div>

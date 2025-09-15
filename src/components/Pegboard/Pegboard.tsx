@@ -35,36 +35,32 @@ const Pegboard: React.FC<PegboardProps> = ({
   const isMobile = useMediaQuery(theme => theme.breakpoints.down("md"))
   // Mouse handlers for dragging paint/erase
   const handleMouseDown = useCallback((y: number, x: number) => {
-    if (isMobile) return
     setIsMouseDown(true);
     onCellClick(y, x);
-  }, [setIsMouseDown, onCellClick, isMobile]);
+  }, [setIsMouseDown, onCellClick]);
 
   const handleMouseOver = useCallback((y: number, x: number) => {
-    if (isMobile) return
     if (onMouseOver) {
       onMouseOver(y, x);
     }
-  }, [onMouseOver, isMobile]);
+  }, [onMouseOver]);
 
   const handleMouseUp = useCallback(() => {
-    if (isMobile) return
     setIsMouseDown(false);
     if (onMouseUp) {
       onMouseUp();
     }
-  }, [setIsMouseDown, onMouseUp, isMobile]);
+  }, [setIsMouseDown, onMouseUp]);
   
   // Add mouse leave handler to handle cases where cursor leaves the pegboard
   const handleMouseLeave = useCallback(() => {
-    if (isMobile) return
     if (isMouseDown) {
       setIsMouseDown(false);
       if (onMouseUp) {
         onMouseUp();
       }
     }
-  }, [isMouseDown, setIsMouseDown, onMouseUp, isMobile]);
+  }, [isMouseDown, setIsMouseDown, onMouseUp]);
 
   // When a color is selected for replacement
   const handleReplaceColor = useCallback((oldColor: string) => {
