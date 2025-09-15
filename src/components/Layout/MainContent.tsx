@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Slider, useMediaQuery } from "@mui/material";
+import { Box, Button, useMediaQuery } from "@mui/material";
 import UploadIcon from "@mui/icons-material/Upload";
 import BrushIcon from "@mui/icons-material/Brush";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import ClearIcon from "@mui/icons-material/Clear";
 import {
   MainContent as StyledMainContent,
@@ -48,7 +47,6 @@ interface MainContentProps {
   onResetGridSize: () => void;
   onReplaceColor: (oldColor: string, newColor: string) => void;
   onClearGrid: () => void;
-  normalizeColors: (threshold: number) => void;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -80,15 +78,12 @@ const MainContent: React.FC<MainContentProps> = ({
   onResetGridSize,
   onReplaceColor,
   onClearGrid,
-  normalizeColors,
   onScaleCommit,
 }) => {
   // Get list of colors used in the pattern for the replacement dialog
   const [openColorDialog, setOpenColorDialog] = useState(false);
   const [oldColor, setOldColor] = useState("");
   const [newColor, setNewColor] = useState("#000000");
-  const [openNormalizationDialog, setOpenNormalizationDialog] = useState(false);
-  const [normalizationThreshold, setNormalizationThreshold] = useState(0.5);
   const [savedColors, setSavedColors] = useState<string[]>([]);
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
 
@@ -127,22 +122,7 @@ const MainContent: React.FC<MainContentProps> = ({
     }
   };
 
-  const handleOpenNormalizationDialog = () => {
-    setOpenNormalizationDialog(true);
-  };
-
-  const handleCloseNormalizationDialog = () => {
-    setOpenNormalizationDialog(false);
-  };
-
-  const handleNormalizationThresholdChange = (_event: Event, value: number | number[]) => {
-    setNormalizationThreshold(value as number);
-  };
-
-  const handleNormalizeColors = () => {
-    normalizeColors(normalizationThreshold);
-    handleCloseNormalizationDialog();
-  };
+  // Color normalization is now applied automatically during generation in the worker.
 
   return (
     <StyledMainContent drawerOpen>
@@ -178,15 +158,7 @@ const MainContent: React.FC<MainContentProps> = ({
             <Button fullWidth={isMobile} variant="outlined" onClick={onClearGrid} startIcon={<ClearIcon />}>
               Clear Grid
             </Button>
-            {image && (
-              <Button
-                fullWidth={isMobile}
-                variant="outlined"
-                onClick={handleOpenNormalizationDialog}
-                startIcon={<FilterListIcon />}>
-                Normalize Colors
-              </Button>
-            )}
+            {/* Manual Normalize Colors control removed: normalization is automatic during generation */}
           </Box>
 
           <GridSizeControls
@@ -256,54 +228,7 @@ const MainContent: React.FC<MainContentProps> = ({
         onNewColorChange={setNewColor}
       />
 
-      {/* Normalization dialog */}
-      <Dialog open={openNormalizationDialog} onClose={handleCloseNormalizationDialog}>
-        <DialogTitle>Normalize Colors</DialogTitle>
-        <DialogContent sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2, minWidth: 350 }}>
-          <Typography variant="body1">
-            This will combine similar colors in your pattern to reduce the total number of unique beads needed.
-          </Typography>
-
-          <Box>
-            <Typography variant="subtitle2" gutterBottom>
-              Current Colors: {usedColors.length}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2" gutterBottom>
-              Similarity Threshold: {Math.round(normalizationThreshold * 100)}%
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Higher values group more colors together. Lower values preserve more of the original colors.
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
-              <Typography variant="caption" color="text.secondary">
-                Minimal
-              </Typography>
-              <Slider
-                value={normalizationThreshold}
-                onChange={handleNormalizationThresholdChange}
-                min={0}
-                max={1}
-                step={0.01}
-                sx={{ mx: 2 }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                Aggressive
-              </Typography>
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseNormalizationDialog} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleNormalizeColors} color="primary" variant="contained">
-            Normalize
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Manual normalization dialog removed */}
     </StyledMainContent>
   );
 };

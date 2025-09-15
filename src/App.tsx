@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { generateDominantCellPattern } from "./utils/imageUtils";
 import { fillArea } from "./utils/gridUtils";
-import { normalizeColors } from "./utils/colorUtils";
 import { usePerlerPattern } from "./hooks/usePerlerPattern";
 import { exportAsJSON, exportAsPNG } from "./utils/exportUtils";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -188,47 +187,6 @@ function App() {
     [perlerPattern, setPerlerPattern, addToHistory]
   );
 
-  // Normalize the colors in the pattern to reduce similar colors
-  const normalizePatternColors = useCallback(
-    (threshold: number = 5) => {
-      // Get all unique colors in the pattern
-      const uniqueColors = new Set<string>();
-      perlerPattern.forEach((row) => {
-        row.forEach((cell) => {
-          if (cell && cell !== "transparent") {
-            uniqueColors.add(cell);
-          }
-        });
-      });
-
-      const colors = Array.from(uniqueColors);
-
-      // Skip if there are very few colors
-      if (colors.length <= 1) return;
-
-      // Calculate a scaled threshold based on slider value (0-1) to a more useful range (1-20)
-      // This provides a more intuitive slider experience
-      const scaledThreshold = 1 + threshold * 19; // Maps 0-1 to 1-20
-
-      // Get color mapping from the normalize function
-      const colorMap = normalizeColors(colors, scaledThreshold);
-
-      // Replace colors in the pattern
-      const newPattern = perlerPattern.map((row) =>
-        row.map((cell) => {
-          if (cell && cell !== "transparent" && colorMap[cell]) {
-            return colorMap[cell];
-          }
-          return cell;
-        })
-      );
-
-      // Update state with new pattern
-      setPerlerPattern(newPattern);
-      addToHistory(newPattern);
-    },
-    [perlerPattern, setPerlerPattern, addToHistory]
-  );
 
   // Mouse event handlers with drag painting support
   const handleMouseDown = useCallback(
@@ -379,7 +337,6 @@ function App() {
         onImportFile={handleImportFile}
         onResetGridSize={resetGridSize}
         onReplaceColor={handleReplaceColor}
-        normalizeColors={normalizePatternColors}
         onClearGrid={clearGrid}
       />
     </AppContainer>

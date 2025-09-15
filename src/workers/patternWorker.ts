@@ -2,7 +2,7 @@
 // Receives: { imageUrl: string, scalePercent: number, gridWidth: number, gridHeight: number, multiplier: number }
 // Returns: { type: 'RESULT', pattern: string[][] }
 
-import { rgbToHex, rgbToHsv } from "../utils/colorUtils";
+import { rgbToHex, rgbToHsv, normalizeColors } from "../utils/colorUtils";
 
 interface GenerateMessage {
   imageUrl: string;
@@ -132,5 +132,18 @@ self.onmessage = async (e: MessageEvent) => {
   }
 
   // Post back result
-  (self as unknown as Worker).postMessage({ type: "RESULT", pattern });
+  // Auto-normalize at highest strength
+  const unique = new Set<string>();
+  for (let y = 0; y < gridH; y++) {
+    for (let x = 0; x < gridW; x++) {
+      const c = pattern[y][x];
+      if (c && c !== "transparent") unique.add(c);
+    }
+  }
+  const colorMap = normalizeColors(Array.from(unique), 20);
+  const normalized = pattern.map((row) =>
+    row.map((c) => (c && c !== "transparent" && colorMap[c] ? colorMap[c] : c))
+  );
+
+  (self as unknown as Worker).postMessage({ type: "RESULT", pattern: normalized });
 };

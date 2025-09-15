@@ -17,7 +17,11 @@ export const generateDominantCellPattern = (
   const multiplier = options?.multiplier ?? 15;
   // Offload heavy work to Web Worker (including image decode and draw via OffscreenCanvas)
   if (activeWorker) {
-    try { activeWorker.terminate(); } catch { /* ignore previous worker termination errors */ }
+    try {
+      activeWorker.terminate();
+    } catch {
+      /* ignore previous worker termination errors */
+    }
     activeWorker = null;
   }
   const worker = new Worker(new URL("../workers/patternWorker.ts", import.meta.url), { type: "module" });
@@ -30,7 +34,11 @@ export const generateDominantCellPattern = (
       const empty = Array.from({ length: gridSize.height }, () => Array(gridSize.width).fill("transparent"));
       onPatternGenerated(empty);
     }
-    try { worker.terminate(); } finally { activeWorker = null; }
+    try {
+      worker.terminate();
+    } finally {
+      activeWorker = null;
+    }
   };
 
   worker.postMessage({
