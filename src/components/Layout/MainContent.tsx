@@ -1,48 +1,53 @@
-import React, { useState, useEffect } from "react"
-import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Slider, useMediaQuery } from "@mui/material"
-import UploadIcon from "@mui/icons-material/Upload"
-import BrushIcon from "@mui/icons-material/Brush"
-import RestartAltIcon from "@mui/icons-material/RestartAlt"
-import FilterListIcon from "@mui/icons-material/FilterList"
-import ClearIcon from "@mui/icons-material/Clear"
-import { MainContent as StyledMainContent, SectionTitle, PegboardContainer, OriginalImageContainer } from "../../styles/styledComponents"
-import Pegboard from "../Pegboard"
-import { GridSizeControls, ExportControls } from "../Controls"
-import { EditTool, GridSize } from "../../types"
-import { getSavedColors } from "../../utils/storageUtils"
-import ColorReplacementDialog from "../Dialogs/ColorReplacementDialog"
-import { Attribution } from "./Attribution"
+import React, { useState, useEffect } from "react";
+import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Slider, useMediaQuery } from "@mui/material";
+import UploadIcon from "@mui/icons-material/Upload";
+import BrushIcon from "@mui/icons-material/Brush";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import ClearIcon from "@mui/icons-material/Clear";
+import {
+  MainContent as StyledMainContent,
+  SectionTitle,
+  PegboardContainer,
+  OriginalImageContainer,
+} from "../../styles/styledComponents";
+import Pegboard from "../Pegboard";
+import { GridSizeControls, ExportControls } from "../Controls";
+import { EditTool, GridSize } from "../../types";
+import { getSavedColors } from "../../utils/storageUtils";
+import ColorReplacementDialog from "../Dialogs/ColorReplacementDialog";
+import { Attribution } from "./Attribution";
 
 interface MainContentProps {
-  image: string | null
-  gridSize: GridSize
-  scale: number
-  separateDimensions: boolean
-  perlerPattern: string[][]
-  gridRef: React.RefObject<HTMLDivElement | null>
-  isLargeGrid: boolean
-  currentTool: EditTool
-  isMouseDown: boolean
-  setIsMouseDown: (isDown: boolean) => void
-  fileInputRef: React.RefObject<HTMLInputElement | null>
-  importFileRef: React.RefObject<HTMLInputElement | null>
-  onUploadClick: (event: React.ChangeEvent<HTMLInputElement>) => void
-  onRegeneratePattern: () => void
-  onSeparateDimensionsChange: (checked: boolean) => void
-  onGridSizeChange: (value: number) => void
-  onDimensionChange: (dimension: "width" | "height", value: number) => void
-  onScaleChange: (value: number | number[]) => void
-  onCellClick: (y: number, x: number) => void
-  onMouseOver?: (y: number, x: number) => void
-  onMouseUp?: () => void
-  onExportPng: () => void
-  onExportJson: () => void
-  onImportClick: () => void
-  onImportFile: (event: React.ChangeEvent<HTMLInputElement>) => void
-  onResetGridSize: () => void
-  onReplaceColor: (oldColor: string, newColor: string) => void
-  onClearGrid: () => void
-  normalizeColors: (threshold: number) => void
+  image: string | null;
+  gridSize: GridSize;
+  scale: number;
+  separateDimensions: boolean;
+  perlerPattern: string[][];
+  gridRef: React.RefObject<HTMLDivElement | null>;
+  isLargeGrid: boolean;
+  currentTool: EditTool;
+  isMouseDown: boolean;
+  setIsMouseDown: (isDown: boolean) => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  importFileRef: React.RefObject<HTMLInputElement | null>;
+  onUploadClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onRegeneratePattern: () => void;
+  onSeparateDimensionsChange: (checked: boolean) => void;
+  onGridSizeChange: (value: number) => void;
+  onDimensionChange: (dimension: "width" | "height", value: number) => void;
+  onScaleChange: (value: number | number[]) => void;
+  onCellClick: (y: number, x: number) => void;
+  onMouseOver?: (y: number, x: number) => void;
+  onMouseUp?: () => void;
+  onExportPng: () => void;
+  onExportJson: () => void;
+  onImportClick: () => void;
+  onImportFile: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onResetGridSize: () => void;
+  onReplaceColor: (oldColor: string, newColor: string) => void;
+  onClearGrid: () => void;
+  normalizeColors: (threshold: number) => void;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -74,68 +79,68 @@ const MainContent: React.FC<MainContentProps> = ({
   onResetGridSize,
   onReplaceColor,
   onClearGrid,
-  normalizeColors
+  normalizeColors,
 }) => {
   // Get list of colors used in the pattern for the replacement dialog
-  const [openColorDialog, setOpenColorDialog] = useState(false)
-  const [oldColor, setOldColor] = useState("")
-  const [newColor, setNewColor] = useState("#000000")
-  const [openNormalizationDialog, setOpenNormalizationDialog] = useState(false)
-  const [normalizationThreshold, setNormalizationThreshold] = useState(0.5)
-  const [savedColors, setSavedColors] = useState<string[]>([])
-  const isMobile = useMediaQuery(theme => theme.breakpoints.down('md'))
+  const [openColorDialog, setOpenColorDialog] = useState(false);
+  const [oldColor, setOldColor] = useState("");
+  const [newColor, setNewColor] = useState("#000000");
+  const [openNormalizationDialog, setOpenNormalizationDialog] = useState(false);
+  const [normalizationThreshold, setNormalizationThreshold] = useState(0.5);
+  const [savedColors, setSavedColors] = useState<string[]>([]);
+  const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
 
   useEffect(() => {
-    const savedColors = getSavedColors()
-    setSavedColors(savedColors)
-  }, [])
+    const savedColors = getSavedColors();
+    setSavedColors(savedColors);
+  }, []);
 
   // Get unique colors from pattern
   const usedColors = React.useMemo(() => {
-    const colors = new Set<string>()
+    const colors = new Set<string>();
     perlerPattern.forEach((row) => {
       row.forEach((cell) => {
         if (cell && cell !== "transparent") {
-          colors.add(cell)
+          colors.add(cell);
         }
-      })
-    })
-    return Array.from(colors)
-  }, [perlerPattern])
+      });
+    });
+    return Array.from(colors);
+  }, [perlerPattern]);
 
   // Handle replacement from the color legend
   const handleColorSwatch = (oldColorValue: string) => {
-    setOldColor(oldColorValue)
-    setOpenColorDialog(true)
-  }
+    setOldColor(oldColorValue);
+    setOpenColorDialog(true);
+  };
 
   const handleCloseDialog = () => {
-    setOpenColorDialog(false)
-  }
+    setOpenColorDialog(false);
+  };
 
   const handleReplaceColor = () => {
     if (oldColor && newColor) {
-      onReplaceColor(oldColor, newColor)
-      handleCloseDialog()
+      onReplaceColor(oldColor, newColor);
+      handleCloseDialog();
     }
-  }
+  };
 
   const handleOpenNormalizationDialog = () => {
-    setOpenNormalizationDialog(true)
-  }
+    setOpenNormalizationDialog(true);
+  };
 
   const handleCloseNormalizationDialog = () => {
-    setOpenNormalizationDialog(false)
-  }
+    setOpenNormalizationDialog(false);
+  };
 
   const handleNormalizationThresholdChange = (_event: Event, value: number | number[]) => {
-    setNormalizationThreshold(value as number)
-  }
+    setNormalizationThreshold(value as number);
+  };
 
   const handleNormalizeColors = () => {
-    normalizeColors(normalizationThreshold)
-    handleCloseNormalizationDialog()
-  }
+    normalizeColors(normalizationThreshold);
+    handleCloseNormalizationDialog();
+  };
 
   return (
     <StyledMainContent drawerOpen>
@@ -147,12 +152,21 @@ const MainContent: React.FC<MainContentProps> = ({
       <PegboardContainer>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3, width: "100%" }}>
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-            <Button fullWidth={isMobile} variant="contained" onClick={() => fileInputRef.current?.click()} startIcon={<UploadIcon />}>
+            <Button
+              fullWidth={isMobile}
+              variant="contained"
+              onClick={() => fileInputRef.current?.click()}
+              startIcon={<UploadIcon />}>
               Upload Image
             </Button>
             <input type="file" ref={fileInputRef} onChange={onUploadClick} accept="image/*" style={{ display: "none" }} />
             {image && (
-              <Button fullWidth={isMobile} variant="contained" color="secondary" onClick={onRegeneratePattern} startIcon={<BrushIcon />}>
+              <Button
+                fullWidth={isMobile}
+                variant="contained"
+                color="secondary"
+                onClick={() => onRegeneratePattern()}
+                startIcon={<BrushIcon />}>
                 Regenerate Pattern
               </Button>
             )}
@@ -163,7 +177,11 @@ const MainContent: React.FC<MainContentProps> = ({
               Clear Grid
             </Button>
             {image && (
-              <Button fullWidth={isMobile} variant="outlined" onClick={handleOpenNormalizationDialog} startIcon={<FilterListIcon />}>
+              <Button
+                fullWidth={isMobile}
+                variant="outlined"
+                onClick={handleOpenNormalizationDialog}
+                startIcon={<FilterListIcon />}>
                 Normalize Colors
               </Button>
             )}
@@ -201,8 +219,8 @@ const MainContent: React.FC<MainContentProps> = ({
           onExportPng={onExportPng}
           onExportJson={onExportJson}
           onImportClick={() => {
-            onImportClick()
-            importFileRef.current?.click() // Handle file input click here
+            onImportClick();
+            importFileRef.current?.click(); // Handle file input click here
           }}
         />
         {isMobile && (
@@ -210,7 +228,7 @@ const MainContent: React.FC<MainContentProps> = ({
             <br />
             <Attribution fullWidth />
           </>
-      )}
+        )}
       </PegboardContainer>
 
       {/* Hidden import file input */}
@@ -284,7 +302,7 @@ const MainContent: React.FC<MainContentProps> = ({
         </DialogActions>
       </Dialog>
     </StyledMainContent>
-  )
-}
+  );
+};
 
-export default MainContent
+export default MainContent;
