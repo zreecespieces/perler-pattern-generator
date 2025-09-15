@@ -89,7 +89,9 @@ const Pegboard: React.FC<PegboardProps> = ({
       }}
       onMouseLeave={handleMouseLeave}
     >
-      <ColorLegend perlerPattern={perlerPattern} onReplaceColor={handleReplaceColor} />
+      {!isMobile && (
+        <ColorLegend perlerPattern={perlerPattern} onReplaceColor={handleReplaceColor} />
+      )}
       
       <CanvasGrid
         perlerPattern={perlerPattern}
