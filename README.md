@@ -11,14 +11,16 @@ It's common to make perlers and string them into necklaces, bracelets, and other
 ## 🎨 Features
 
 - **🖼️ Image Upload**: Convert any image into a Perler bead pattern instantly
-- **🔄 Direct Pattern Editing**: Create and edit patterns directly without uploading an image
-- **🎭 Color Replacement**: Change any color in your pattern with our intuitive replacement tool
+- **🎨 Direct Pattern Editing**: Create and edit patterns directly without uploading an image
+- **🔄 Color Replacement**: Change any color in your pattern instantly
 - **🧩 Custom Grid Size**: Customize your pattern size to fit any pegboard
-- **📊 Color Normalization**: Simplify your pattern by reducing similar colors
-- **💾 Export Options**: Save your patterns as PNG images or JSON files
+- ⚖️ **Adjust Image Scale**: Zoom your picture in and out on the board to get a perfect fit
+- **📊 Color Normalization**: Automatically simplifies your pattern to the simplest number of colors
+- **💾 Export Options**: Save your patterns as PNG images or JSON files to import and edit later
 - **🔍 Original Image Preview**: See your source image alongside the generated pattern
 - **↩️ Undo/Redo**: Made a mistake? No problem! Full undo/redo support
 - **🎯 Precise Controls**: Adjust dimensions independently for the perfect pattern size
+- 🔢 **Bead Count:** Keeps track of the number of beads used for each color
 
 ## 🚀 Getting Started
 
@@ -47,12 +49,10 @@ npm run dev
 
 ## 📖 How to Use
 
-1. **Upload an Image**: Click the upload button to convert your image into a pattern
-2. **Direct Drawing**: Use the brush tool to create or modify your pattern
-3. **Replace Colors**: Select any color in your pattern and replace it with a new one
-4. **Adjust Size**: Change the grid size to match your pegboard dimensions
-5. **Normalize Colors**: Simplify your pattern by reducing similar colors
-6. **Export Your Creation**: Save your pattern as a PNG image or JSON file
+1. **Adjust Size**: Change the grid size to match your pegboard dimensions
+2. **Upload an Image**: Click the upload button to convert your image into a pattern
+3. **Direct Drawing**: Use the brush tool to create or modify your pattern
+4. **Export Your Creation**: Save your pattern as a PNG image or JSON file to edit again later
 
 ## 🔗 Links
 
