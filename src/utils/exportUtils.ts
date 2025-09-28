@@ -36,8 +36,15 @@ const saveBlob = async (
       await writable.write(blob);
       await writable.close();
       return;
-    } catch {
-      // User canceled or API failed; fall back below
+    } catch (err: unknown) {
+      // If the user canceled the dialog or denied permission, do NOT fall back to auto-download
+      const e = err as { name?: string; message?: string } | undefined;
+      const name = e?.name || "";
+      const message = (e?.message || "").toLowerCase();
+      if (name === "AbortError" || name === "NotAllowedError" || message.includes("abort")) {
+        return; // Respect user cancellation
+      }
+      // Otherwise, proceed to fallback below
     }
   }
 
@@ -84,16 +91,10 @@ export const exportAsPNG = async (gridRef?: HTMLDivElement | null): Promise<void
   ctx.font = "17px Arial";
   ctx.fillStyle = "#000000";
   ctx.textAlign = "center";
-  ctx.fillText(
-    "Instant Perler Pattern - https://zacharyreece.dev/instant-perler-pattern",
-    exportCanvas.width / 2,
-    exportCanvas.height - 5
-  );
+  ctx.fillText("https://zacharyreece.dev/instant-perler-pattern", exportCanvas.width / 2, exportCanvas.height - 5);
 
   // Convert to Blob and prompt user for save location/name
-  const blob: Blob | null = await new Promise((resolve) =>
-    exportCanvas.toBlob((b) => resolve(b), "image/png")
-  );
+  const blob: Blob | null = await new Promise((resolve) => exportCanvas.toBlob((b) => resolve(b), "image/png"));
   if (blob) {
     await saveBlob(blob, "perler-pattern.png", "PNG Image", "image/png", ".png");
   } else {
@@ -112,11 +113,7 @@ export const exportAsPNG = async (gridRef?: HTMLDivElement | null): Promise<void
 /**
  * Export the current pattern as a JSON file
  */
-export const exportAsJSON = async (
-  gridSize: GridSize,
-  scale: number,
-  perlerPattern: string[][]
-): Promise<void> => {
+export const exportAsJSON = async (gridSize: GridSize, scale: number, perlerPattern: string[][]): Promise<void> => {
   // Create state object
   const state = {
     gridSize,
