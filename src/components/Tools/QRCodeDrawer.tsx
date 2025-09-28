@@ -204,6 +204,7 @@ const QRCodeDrawer: React.FC<QRCodeDrawerProps> = ({ open, onClose, onGenerateFr
         <TextField
           label="QR content"
           placeholder="Type text or URL"
+          multiline
           value={text}
           onChange={(e) => setText(e.target.value)}
           size="small"
@@ -212,11 +213,6 @@ const QRCodeDrawer: React.FC<QRCodeDrawerProps> = ({ open, onClose, onGenerateFr
 
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
           <canvas ref={previewCanvasRef} style={{ width: 220, height: 220, imageRendering: "pixelated" }} />
-          {moduleCount && (
-            <Typography variant="caption" color="text.secondary">
-              Modules: {moduleCount} • auto-fit to grid
-            </Typography>
-          )}
         </Box>
 
         {error && (
