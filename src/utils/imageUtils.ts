@@ -12,7 +12,7 @@ export const generateDominantCellPattern = (
   scalePercent: number,
   gridSize: GridSize,
   onPatternGenerated: (pattern: string[][]) => void,
-  options?: { multiplier?: number }
+  options?: { multiplier?: number; offsetCellsX?: number; offsetCellsY?: number }
 ): void => {
   const multiplier = options?.multiplier ?? 15;
   // Offload heavy work to Web Worker (including image decode and draw via OffscreenCanvas)
@@ -47,5 +47,7 @@ export const generateDominantCellPattern = (
     gridWidth: gridSize.width,
     gridHeight: gridSize.height,
     multiplier,
+    offsetCellsX: options?.offsetCellsX ?? 0,
+    offsetCellsY: options?.offsetCellsY ?? 0,
   });
 };

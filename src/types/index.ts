@@ -15,3 +15,5 @@ export type GridSize = {
   width: number;
   height: number;
 };
+
+export type PanDirection = 'up' | 'down' | 'left' | 'right';

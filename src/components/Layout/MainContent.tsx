@@ -14,7 +14,7 @@ import {
 } from "../../styles/styledComponents";
 import Pegboard from "../Pegboard";
 import { GridSizeControls, ExportControls } from "../Controls";
-import { EditTool, GridSize } from "../../types";
+import { EditTool, GridSize, PanDirection } from "../../types";
 import { getSavedColors } from "../../utils/storageUtils";
 import ColorReplacementDialog from "../Dialogs/ColorReplacementDialog";
 import { Attribution } from "./Attribution";
@@ -50,6 +50,8 @@ interface MainContentProps {
   onReplaceColor: (oldColor: string, newColor: string) => void;
   onClearGrid: () => void;
   onOpenTools?: () => void;
+  onPan: (direction: PanDirection) => void;
+  onRecenter: () => void;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -83,6 +85,8 @@ const MainContent: React.FC<MainContentProps> = ({
   onClearGrid,
   onScaleCommit,
   onOpenTools,
+  onPan,
+  onRecenter,
 }) => {
   // Get list of colors used in the pattern for the replacement dialog
   const [openColorDialog, setOpenColorDialog] = useState(false);
@@ -209,6 +213,8 @@ const MainContent: React.FC<MainContentProps> = ({
           onMouseUp={onMouseUp}
           onReplaceColor={handleColorSwatch}
           scale={scale}
+          onPan={onPan}
+          onRecenter={onRecenter}
         />
 
         <ExportControls

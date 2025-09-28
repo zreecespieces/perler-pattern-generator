@@ -1,7 +1,8 @@
 import React, { useCallback } from "react";
 import CanvasGrid from "../CanvasGrid";
 import ColorLegend from "../ColorLegend";
-import { GridSize, EditTool } from "../../types";
+import { GridSize, EditTool, PanDirection } from "../../types";
+import { PanControls } from "../Controls";
 import { Box, useMediaQuery } from "@mui/material";
 
 interface PegboardProps {
@@ -17,6 +18,8 @@ interface PegboardProps {
   onMouseUp?: () => void;
   onReplaceColor?: (oldColor: string, newColor: string) => void;
   scale?: number;
+  onPan: (direction: PanDirection) => void;
+  onRecenter: () => void;
 }
 
 const Pegboard: React.FC<PegboardProps> = ({
@@ -31,6 +34,8 @@ const Pegboard: React.FC<PegboardProps> = ({
   onMouseUp,
   onReplaceColor,
   scale = 100,
+  onPan,
+  onRecenter,
 }) => {
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
   // Mouse handlers for dragging paint/erase
@@ -83,8 +88,11 @@ const Pegboard: React.FC<PegboardProps> = ({
     <Box
       ref={gridRef}
       sx={{
-        display: "flex",
-        flexDirection: isMobile ? "column" : "row",
+        display: isMobile ? "flex" : "grid",
+        flexDirection: isMobile ? "column" : undefined,
+        gridTemplateColumns: isMobile ? undefined : "1fr auto 1fr",
+        justifyItems: isMobile ? undefined : "center",
+        columnGap: isMobile ? 0 : 2,
         justifyContent: "center",
         alignItems: "center",
         width: "100%",
@@ -92,23 +100,36 @@ const Pegboard: React.FC<PegboardProps> = ({
         position: "relative",
       }}
       onMouseLeave={handleMouseLeave}>
-      {!isMobile && <ColorLegend perlerPattern={perlerPattern} onReplaceColor={handleReplaceColor} />}
+      <Box sx={{ gridColumn: isMobile ? undefined : 2, display: "inline-flex", width: "fit-content", height: "fit-content", justifyContent: "center", alignItems: "center" }}>
+        <CanvasGrid
+          perlerPattern={perlerPattern}
+          gridSize={gridSize}
+          onMouseDown={handleMouseDown}
+          onMouseOver={handleMouseOver}
+          onMouseUp={handleMouseUp}
+          currentTool={currentTool}
+          scale={scale}
+        />
+      </Box>
 
-      <CanvasGrid
-        perlerPattern={perlerPattern}
-        gridSize={gridSize}
-        onMouseDown={handleMouseDown}
-        onMouseOver={handleMouseOver}
-        onMouseUp={handleMouseUp}
-        currentTool={currentTool}
-        scale={scale}
-      />
+      {!isMobile && (
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "stretch", gridColumn: 3, height: "100%", justifySelf: "end", width: "max-content" }}>
+          <ColorLegend perlerPattern={perlerPattern} onReplaceColor={handleReplaceColor} />
+          <Box sx={{ flexGrow: 1 }} />
+          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <PanControls onPan={onPan} onRecenter={onRecenter} />
+          </Box>
+        </Box>
+      )}
 
       {/* Color legend showing counts of each color used */}
       {isMobile && (
         <>
           <br />
           <ColorLegend perlerPattern={perlerPattern} onReplaceColor={handleReplaceColor} />
+          <Box sx={{ mt: 1, display: "flex", justifyContent: "flex-end", width: "100%" }}>
+            <PanControls onPan={onPan} onRecenter={onRecenter} />
+          </Box>
         </>
       )}
     </Box>

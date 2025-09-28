@@ -10,6 +10,8 @@ interface GenerateMessage {
   gridWidth: number;
   gridHeight: number;
   multiplier: number;
+  offsetCellsX?: number;
+  offsetCellsY?: number;
 }
 
 self.onmessage = async (e: MessageEvent) => {
@@ -48,8 +50,15 @@ self.onmessage = async (e: MessageEvent) => {
       scaledHeight = sampleHeight * (scalePercent / 100);
       scaledWidth = scaledHeight * imgAspectRatio;
     }
-    const offsetX = (sampleWidth - scaledWidth) / 2;
-    const offsetY = (sampleHeight - scaledHeight) / 2;
+    // Base center offset
+    let offsetX = (sampleWidth - scaledWidth) / 2;
+    let offsetY = (sampleHeight - scaledHeight) / 2;
+
+    // Apply persistent pan offset measured in grid cells (each cell is `multiplier` pixels in sample space)
+    const panOffsetX = (msg.offsetCellsX ?? 0) * multiplier;
+    const panOffsetY = (msg.offsetCellsY ?? 0) * multiplier;
+    offsetX += panOffsetX;
+    offsetY += panOffsetY;
 
     ctx.clearRect(0, 0, sampleWidth, sampleHeight);
     ctx.drawImage(bitmap, offsetX, offsetY, scaledWidth, scaledHeight);

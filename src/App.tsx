@@ -1,10 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { generateDominantCellPattern } from "./utils/imageUtils";
-import { fillArea } from "./utils/gridUtils";
+import { fillArea, shiftPatternUp, shiftPatternDown, shiftPatternLeft, shiftPatternRight, shiftPatternBy } from "./utils/gridUtils";
 import { usePerlerPattern } from "./hooks/usePerlerPattern";
 import { exportAsJSON, exportAsPNG } from "./utils/exportUtils";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { EditTool, GridSize } from "./types";
+import { EditTool, GridSize, PanDirection } from "./types";
 import { AppContainer } from "./styles/styledComponents";
 import { MainContent, ToolsDrawer } from "./components/Layout";
 import { toolColors } from "./utils/beadColors";
@@ -16,6 +16,7 @@ function App() {
   const [currentColor, setCurrentColor] = useState("#000000"); // Default to black
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [scale, setScale] = useState(100); // Scale percentage (100% = full size)
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 }); // persistent offset in grid cells
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
   const scaleDebounceRef = useRef<number | undefined>(undefined);
@@ -46,6 +47,28 @@ function App() {
   // Grid ref for capturing as image
   const gridRef = useRef<HTMLDivElement>(null);
 
+  // Generate pattern from image with automatic edge detection (memoized)
+  const generatePattern = useCallback((imageUrl: string, scalePercent: number) => {
+    console.log("generatePattern called - using automatic edge detection");
+
+    // Always use advanced region-based pattern generation with automatic edge detection
+    console.log("Using advanced region-based pattern generation with automatic edge detection");
+
+    generateDominantCellPattern(
+      imageUrl,
+      scalePercent,
+      gridSize,
+      (newPattern: string[][]) => {
+        if (newPattern) {
+          console.log("Dominant-per-cell pattern generated successfully");
+          setPerlerPattern(newPattern);
+          addToHistory(newPattern);
+        }
+      },
+      { offsetCellsX: panOffset.x, offsetCellsY: panOffset.y }
+    );
+  }, [gridSize, panOffset.x, panOffset.y, setPerlerPattern, addToHistory]);
+
   // Regenerate pattern from the current image with automatic edge detection
   const regeneratePattern = () => {
     if (image) {
@@ -53,16 +76,90 @@ function App() {
     }
   };
 
+  // Recenter: shift pattern back by current panOffset and reset offset
+  const handleRecenter = useCallback(() => {
+    const { x, y } = panOffset;
+    if (x === 0 && y === 0) return;
+
+    // Always inverse-shift current pattern immediately so the UI recenters instantly
+    const shifted = shiftPatternBy(perlerPattern, gridSize, -x, -y);
+    setPerlerPattern(shifted);
+    addToHistory(shifted);
+    setPanOffset({ x: 0, y: 0 });
+
+    // If an image is loaded, regenerate from the true origin (no offsets)
+    if (image) {
+      generateDominantCellPattern(
+        image,
+        scale,
+        gridSize,
+        (newPattern: string[][]) => {
+          setPerlerPattern(newPattern);
+          addToHistory(newPattern);
+        },
+        { offsetCellsX: 0, offsetCellsY: 0 }
+      );
+    }
+  }, [panOffset, perlerPattern, gridSize, setPerlerPattern, addToHistory, image, scale]);
+
+  // Handle panning the entire grid by one cell
+  const handlePan = useCallback(
+    (direction: PanDirection) => {
+      let newPattern: string[][] | null = null;
+      switch (direction) {
+        case "up":
+          newPattern = shiftPatternUp(perlerPattern, gridSize);
+          setPanOffset((prev) => ({ x: prev.x, y: prev.y - 1 }));
+          break;
+        case "down":
+          newPattern = shiftPatternDown(perlerPattern, gridSize);
+          setPanOffset((prev) => ({ x: prev.x, y: prev.y + 1 }));
+          break;
+        case "left":
+          newPattern = shiftPatternLeft(perlerPattern, gridSize);
+          setPanOffset((prev) => ({ x: prev.x - 1, y: prev.y }));
+          break;
+        case "right":
+          newPattern = shiftPatternRight(perlerPattern, gridSize);
+          setPanOffset((prev) => ({ x: prev.x + 1, y: prev.y }));
+          break;
+        default:
+          newPattern = null;
+      }
+      if (newPattern) {
+        setPerlerPattern(newPattern);
+        addToHistory(newPattern);
+      }
+    },
+    [perlerPattern, gridSize, setPerlerPattern, addToHistory]
+  );
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const inputEl = event.target as HTMLInputElement;
+    const file = inputEl.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;
+      // Reset pan offset so a new upload starts centered
+      setPanOffset({ x: 0, y: 0 });
       setImage(dataUrl);
-      // Initial upload should use standard generation (edge detection can be applied via regenerate)
-      generatePattern(dataUrl, scale);
+      // Generate immediately at zero offset to avoid stale offset usage
+      generateDominantCellPattern(
+        dataUrl,
+        scale,
+        gridSize,
+        (newPattern: string[][]) => {
+          if (newPattern) {
+            setPerlerPattern(newPattern);
+            addToHistory(newPattern);
+          }
+        },
+        { offsetCellsX: 0, offsetCellsY: 0 }
+      );
+      // Clear file input so selecting the same file again triggers onChange
+      if (inputEl) inputEl.value = "";
     };
     reader.readAsDataURL(file);
   };
@@ -97,21 +194,7 @@ function App() {
     }
   };
 
-  // Generate pattern from image with automatic edge detection
-  const generatePattern = (imageUrl: string, scalePercent: number) => {
-    console.log("generatePattern called - using automatic edge detection");
-
-    // Always use advanced region-based pattern generation with automatic edge detection
-    console.log("Using advanced region-based pattern generation with automatic edge detection");
-
-    generateDominantCellPattern(imageUrl, scalePercent, gridSize, (newPattern: string[][]) => {
-      if (newPattern) {
-        console.log("Dominant-per-cell pattern generated successfully");
-        setPerlerPattern(newPattern);
-        addToHistory(newPattern);
-      }
-    });
-  };
+  // generatePattern is defined above with useCallback
 
   // Reset grid size back to default 29x29
   const resetGridSize = () => {
@@ -130,6 +213,8 @@ function App() {
 
     // Clear the image as well
     setImage(null);
+    // Reset pan offset so next generation starts centered
+    setPanOffset({ x: 0, y: 0 });
   }, [gridSize.height, gridSize.width, setPerlerPattern, addToHistory]);
 
   // Cell interaction handler with deep clone to avoid any reference issues
@@ -335,6 +420,8 @@ function App() {
         onReplaceColor={handleReplaceColor}
         onClearGrid={clearGrid}
         onOpenTools={() => setMobileToolsOpen(true)}
+        onPan={handlePan}
+        onRecenter={handleRecenter}
       />
     </AppContainer>
   );
