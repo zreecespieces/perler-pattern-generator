@@ -100,7 +100,15 @@ const Pegboard: React.FC<PegboardProps> = ({
         position: "relative",
       }}
       onMouseLeave={handleMouseLeave}>
-      <Box sx={{ gridColumn: isMobile ? undefined : 2, display: "inline-flex", width: "fit-content", height: "fit-content", justifyContent: "center", alignItems: "center" }}>
+      <Box
+        sx={{
+          gridColumn: isMobile ? undefined : 2,
+          display: "inline-flex",
+          width: "fit-content",
+          height: "fit-content",
+          justifyContent: "center",
+          alignItems: "center",
+        }}>
         <CanvasGrid
           perlerPattern={perlerPattern}
           gridSize={gridSize}
@@ -113,7 +121,16 @@ const Pegboard: React.FC<PegboardProps> = ({
       </Box>
 
       {!isMobile && (
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "stretch", gridColumn: 3, height: "100%", justifySelf: "end", width: "max-content" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "stretch",
+            gridColumn: 3,
+            height: "100%",
+            justifySelf: "end",
+            width: "max-content",
+          }}>
           <ColorLegend perlerPattern={perlerPattern} onReplaceColor={handleReplaceColor} />
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
@@ -126,10 +143,10 @@ const Pegboard: React.FC<PegboardProps> = ({
       {isMobile && (
         <>
           <br />
-          <ColorLegend perlerPattern={perlerPattern} onReplaceColor={handleReplaceColor} />
           <Box sx={{ mt: 1, display: "flex", justifyContent: "flex-end", width: "100%" }}>
             <PanControls onPan={onPan} onRecenter={onRecenter} />
           </Box>
+          <ColorLegend perlerPattern={perlerPattern} onReplaceColor={handleReplaceColor} />
         </>
       )}
     </Box>
