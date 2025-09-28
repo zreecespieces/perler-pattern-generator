@@ -8,6 +8,7 @@ import { EditTool, GridSize, PanDirection } from "./types";
 import { AppContainer } from "./styles/styledComponents";
 import { MainContent, ToolsDrawer } from "./components/Layout";
 import { toolColors } from "./utils/beadColors";
+import QRCodeDrawer from "./components/Tools/QRCodeDrawer";
 
 function App() {
   // Initialize with Paint tool selected by default
@@ -24,6 +25,7 @@ function App() {
   // Theme and responsive design
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
+  const [qrOpen, setQROpen] = useState(false);
 
   // Start with a reasonably sized grid for direct painting
   const initialGridSize: GridSize = { width: 29, height: 29 };
@@ -74,6 +76,37 @@ function App() {
     if (image) {
       generatePattern(image, scale);
     }
+  };
+
+  // Open the QR drawer from the tool panel
+  const handleOpenQRCode = () => {
+    if (isMobile) setMobileToolsOpen(false);
+    setQROpen(true);
+  };
+
+  // Generate from a QR image via the existing upload/generation pipeline
+  const handleGenerateFromImage = (dataUrl: string, moduleCount: number) => {
+    // Reset pan offset and set image, then generate at current scale with zero offsets
+    setPanOffset({ x: 0, y: 0 });
+    setImage(dataUrl);
+    // Choose scale based on QR module count
+    let chosenScale = scale;
+    if (moduleCount === 29) chosenScale = 133;
+    else if (moduleCount === 25) chosenScale = 123;
+    else if (moduleCount === 21) chosenScale = 89;
+    setScale(chosenScale);
+    generateDominantCellPattern(
+      dataUrl,
+      chosenScale,
+      gridSize,
+      (newPattern: string[][]) => {
+        if (newPattern) {
+          setPerlerPattern(newPattern);
+          addToHistory(newPattern);
+        }
+      },
+      { offsetCellsX: 0, offsetCellsY: 0, multiplier: 64 }
+    );
   };
 
   // Recenter: shift pattern back by current panOffset and reset offset
@@ -371,6 +404,7 @@ function App() {
           onRedo={redoPattern}
           canUndo={canUndo}
           canRedo={canRedo}
+          onOpenQRCode={handleOpenQRCode}
         />
       )}
       {isMobile && (
@@ -387,6 +421,7 @@ function App() {
           onRedo={redoPattern}
           canUndo={canUndo}
           canRedo={canRedo}
+          onOpenQRCode={handleOpenQRCode}
         />
       )}
       <MainContent
@@ -422,6 +457,13 @@ function App() {
         onOpenTools={() => setMobileToolsOpen(true)}
         onPan={handlePan}
         onRecenter={handleRecenter}
+      />
+
+      {/* QR Code Drawer */}
+      <QRCodeDrawer
+        open={qrOpen}
+        onClose={() => setQROpen(false)}
+        onGenerateFromImage={handleGenerateFromImage}
       />
     </AppContainer>
   );

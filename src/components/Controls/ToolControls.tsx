@@ -6,6 +6,7 @@ import ColorizeIcon from '@mui/icons-material/Colorize';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import FormatColorFillIcon from '@mui/icons-material/FormatColorFill';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
 import { ToolButton } from '../../styles/styledComponents';
 import { EditTool } from '../../types';
 
@@ -17,6 +18,7 @@ interface ToolControlsProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  onOpenQRCode?: () => void;
 }
 
 const ToolControls: React.FC<ToolControlsProps> = ({
@@ -25,7 +27,8 @@ const ToolControls: React.FC<ToolControlsProps> = ({
   onUndo,
   onRedo,
   canUndo,
-  canRedo
+  canRedo,
+  onOpenQRCode,
 }) => {
   return (
     <Box sx={{ p: 2 }}>
@@ -61,6 +64,14 @@ const ToolControls: React.FC<ToolControlsProps> = ({
             onClick={() => onToolChange(EditTool.BUCKET)}
           >
             <FormatColorFillIcon />
+          </ToolButton>
+        </Grid>
+        <Grid item xs={3}>
+          <ToolButton
+            onClick={onOpenQRCode}
+            aria-label="QR Code"
+          >
+            <QrCode2Icon />
           </ToolButton>
         </Grid>
       </Grid>

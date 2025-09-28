@@ -19,6 +19,7 @@ interface ToolsDrawerProps {
   variant?: "persistent" | "temporary";
   open?: boolean;
   onClose?: () => void;
+  onOpenQRCode?: () => void;
 }
 
 const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
@@ -34,6 +35,7 @@ const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
   variant = "persistent",
   open = true,
   onClose,
+  onOpenQRCode,
 }) => {
   return (
     <StyledToolsDrawer variant={variant} anchor="left" open={open} onClose={onClose}>
@@ -51,6 +53,7 @@ const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
         onRedo={onRedo}
         canUndo={canUndo}
         canRedo={canRedo}
+        onOpenQRCode={onOpenQRCode}
       />
       <Box sx={{ px: 2 }}>
         <ColorPicker currentColor={currentColor} beadColors={beadColors} onColorSelect={onColorSelect} />
