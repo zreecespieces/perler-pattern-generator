@@ -4,6 +4,7 @@ export enum EditTool {
   ERASE = "erase",
   EYEDROPPER = "eyedropper",
   BUCKET = "bucket",
+  TEXT = "text",
 }
 
 export type HistoryEntry = {

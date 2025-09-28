@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, IconButton } from "@mui/material";
 import { ToolsDrawer as StyledToolsDrawer, DrawerHeader } from "../../styles/styledComponents";
 import ColorPicker from "../ColorPicker";
 import { ToolControls } from "../Controls";
 import { EditTool } from "../../types";
 import CloseIcon from "@mui/icons-material/Close";
+import TextDrawer from "../Tools/TextDrawer";
 
 interface ToolsDrawerProps {
   currentTool: EditTool;
@@ -19,6 +20,7 @@ interface ToolsDrawerProps {
   variant?: "persistent" | "temporary";
   open?: boolean;
   onClose?: () => void;
+  onPlaceText?: (text: string, fontFamily: string) => void;
 }
 
 const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
@@ -34,7 +36,19 @@ const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
   variant = "persistent",
   open = true,
   onClose,
+  onPlaceText,
 }) => {
+  const [textDrawerOpen, setTextDrawerOpen] = useState(false);
+
+  // Open the text drawer automatically when Text tool is selected
+  useEffect(() => {
+    if (currentTool === EditTool.TEXT) {
+      setTextDrawerOpen(true);
+    } else {
+      setTextDrawerOpen(false);
+    }
+  }, [currentTool]);
+
   return (
     <StyledToolsDrawer variant={variant} anchor="left" open={open} onClose={onClose}>
       {variant === "temporary" && (
@@ -55,6 +69,11 @@ const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
       <Box sx={{ px: 2 }}>
         <ColorPicker currentColor={currentColor} beadColors={beadColors} onColorSelect={onColorSelect} />
       </Box>
+      <TextDrawer
+        open={textDrawerOpen}
+        onClose={() => setTextDrawerOpen(false)}
+        onPlaceText={(text: string, font: string) => onPlaceText?.(text, font)}
+      />
     </StyledToolsDrawer>
   );
 };

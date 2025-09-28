@@ -8,6 +8,7 @@ import { EditTool, GridSize } from "./types";
 import { AppContainer } from "./styles/styledComponents";
 import { MainContent, ToolsDrawer } from "./components/Layout";
 import { toolColors } from "./utils/beadColors";
+import { renderTextMask } from "./utils/textUtils";
 
 function App() {
   // Initialize with Paint tool selected by default
@@ -165,6 +166,26 @@ function App() {
     [perlerPattern, currentTool, currentColor, gridSize, setPerlerPattern, addToHistory]
   );
 
+  // Place text onto the grid using the current color. Text is centered and scaled to fit the grid.
+  const handlePlaceText = useCallback(
+    (text: string, fontFamily: string) => {
+      // SDF-based renderer has optimal defaults baked in; just call it.
+      const mask = renderTextMask(text, fontFamily, gridSize);
+      // Create a deep copy
+      const newPattern = JSON.parse(JSON.stringify(perlerPattern)) as string[][];
+      for (let y = 0; y < mask.length; y++) {
+        for (let x = 0; x < mask[y].length; x++) {
+          if (mask[y][x]) {
+            newPattern[y][x] = currentColor;
+          }
+        }
+      }
+      setPerlerPattern(newPattern);
+      addToHistory(newPattern);
+    },
+    [perlerPattern, gridSize, currentColor, setPerlerPattern, addToHistory]
+  );
+
   // Replace all instances of one color with another in the pattern
   const handleReplaceColor = useCallback(
     (oldColor: string, newColor: string) => {
@@ -286,6 +307,7 @@ function App() {
           onRedo={redoPattern}
           canUndo={canUndo}
           canRedo={canRedo}
+          onPlaceText={handlePlaceText}
         />
       )}
       {isMobile && (
@@ -302,6 +324,7 @@ function App() {
           onRedo={redoPattern}
           canUndo={canUndo}
           canRedo={canRedo}
+          onPlaceText={handlePlaceText}
         />
       )}
       <MainContent

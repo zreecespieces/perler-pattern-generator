@@ -6,6 +6,7 @@ import ColorizeIcon from '@mui/icons-material/Colorize';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import FormatColorFillIcon from '@mui/icons-material/FormatColorFill';
+import TitleIcon from '@mui/icons-material/Title';
 import { ToolButton } from '../../styles/styledComponents';
 import { EditTool } from '../../types';
 
@@ -61,6 +62,14 @@ const ToolControls: React.FC<ToolControlsProps> = ({
             onClick={() => onToolChange(EditTool.BUCKET)}
           >
             <FormatColorFillIcon />
+          </ToolButton>
+        </Grid>
+        <Grid item xs={3}>
+          <ToolButton
+            active={currentTool === EditTool.TEXT}
+            onClick={() => onToolChange(EditTool.TEXT)}
+          >
+            <TitleIcon />
           </ToolButton>
         </Grid>
       </Grid>
