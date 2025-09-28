@@ -90,7 +90,7 @@ const GridSizeControls: React.FC<GridSizeControlsProps> = ({
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <StyledSlider
                     min={29}
-                    max={58}
+                    max={87}
                     step={29}
                     value={gridSize.width}
                     onChange={(_, value) => onDimensionChange('width', value as number)}
@@ -106,7 +106,7 @@ const GridSizeControls: React.FC<GridSizeControlsProps> = ({
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <StyledSlider
                     min={29}
-                    max={58}
+                    max={87}
                     step={29}
                     value={gridSize.height}
                     onChange={(_, value) => onDimensionChange('height', value as number)}

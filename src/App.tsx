@@ -1,6 +1,13 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { generateDominantCellPattern } from "./utils/imageUtils";
-import { fillArea, shiftPatternUp, shiftPatternDown, shiftPatternLeft, shiftPatternRight, shiftPatternBy } from "./utils/gridUtils";
+import {
+  fillArea,
+  shiftPatternUp,
+  shiftPatternDown,
+  shiftPatternLeft,
+  shiftPatternRight,
+  shiftPatternBy,
+} from "./utils/gridUtils";
 import { usePerlerPattern } from "./hooks/usePerlerPattern";
 import { exportAsJSON, exportAsPNG } from "./utils/exportUtils";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -50,26 +57,29 @@ function App() {
   const gridRef = useRef<HTMLDivElement>(null);
 
   // Generate pattern from image with automatic edge detection (memoized)
-  const generatePattern = useCallback((imageUrl: string, scalePercent: number) => {
-    console.log("generatePattern called - using automatic edge detection");
+  const generatePattern = useCallback(
+    (imageUrl: string, scalePercent: number) => {
+      console.log("generatePattern called - using automatic edge detection");
 
-    // Always use advanced region-based pattern generation with automatic edge detection
-    console.log("Using advanced region-based pattern generation with automatic edge detection");
+      // Always use advanced region-based pattern generation with automatic edge detection
+      console.log("Using advanced region-based pattern generation with automatic edge detection");
 
-    generateDominantCellPattern(
-      imageUrl,
-      scalePercent,
-      gridSize,
-      (newPattern: string[][]) => {
-        if (newPattern) {
-          console.log("Dominant-per-cell pattern generated successfully");
-          setPerlerPattern(newPattern);
-          addToHistory(newPattern);
-        }
-      },
-      { offsetCellsX: panOffset.x, offsetCellsY: panOffset.y }
-    );
-  }, [gridSize, panOffset.x, panOffset.y, setPerlerPattern, addToHistory]);
+      generateDominantCellPattern(
+        imageUrl,
+        scalePercent,
+        gridSize,
+        (newPattern: string[][]) => {
+          if (newPattern) {
+            console.log("Dominant-per-cell pattern generated successfully");
+            setPerlerPattern(newPattern);
+            addToHistory(newPattern);
+          }
+        },
+        { offsetCellsX: panOffset.x, offsetCellsY: panOffset.y }
+      );
+    },
+    [gridSize, panOffset.x, panOffset.y, setPerlerPattern, addToHistory]
+  );
 
   // Regenerate pattern from the current image with automatic edge detection
   const regeneratePattern = () => {
@@ -460,11 +470,7 @@ function App() {
       />
 
       {/* QR Code Drawer */}
-      <QRCodeDrawer
-        open={qrOpen}
-        onClose={() => setQROpen(false)}
-        onGenerateFromImage={handleGenerateFromImage}
-      />
+      <QRCodeDrawer open={qrOpen} onClose={() => setQROpen(false)} onGenerateFromImage={handleGenerateFromImage} />
     </AppContainer>
   );
 }
