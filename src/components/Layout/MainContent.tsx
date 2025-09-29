@@ -53,6 +53,7 @@ interface MainContentProps {
   onPan: (direction: PanDirection) => void;
   onRecenter: () => void;
   selectedCells?: Set<string>;
+  selectionDragOffset?: { dx: number; dy: number };
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -89,6 +90,7 @@ const MainContent: React.FC<MainContentProps> = ({
   onPan,
   onRecenter,
   selectedCells,
+  selectionDragOffset,
 }) => {
   // Get list of colors used in the pattern for the replacement dialog
   const [openColorDialog, setOpenColorDialog] = useState(false);
@@ -218,6 +220,7 @@ const MainContent: React.FC<MainContentProps> = ({
           onPan={onPan}
           onRecenter={onRecenter}
           selectedCells={selectedCells}
+          selectionDragOffset={selectionDragOffset}
         />
 
         <ExportControls

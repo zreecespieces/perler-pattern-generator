@@ -28,7 +28,7 @@ const SelectModeControls: React.FC<SelectModeControlsProps> = ({ mode, onModeCha
         </ToggleButton>
       </ToggleButtonGroup>
       <Typography variant="caption" sx={{ mt: 1, display: "block", opacity: 0.8 }}>
-        Hold Cmd (Mac) or Ctrl (Win) to subtract from selection. Press esc to clear selection.
+        Hold Cmd (Mac) or Ctrl (Win) to subtract from selection. Press esc to clear selection. Click and drag to move selection.
       </Typography>
     </Box>
   );

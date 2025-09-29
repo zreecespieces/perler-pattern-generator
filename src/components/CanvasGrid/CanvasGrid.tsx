@@ -12,6 +12,7 @@ interface CanvasGridProps {
   currentTool: EditTool;
   scale?: number;
   selectedCells?: Set<string>;
+  selectionDragOffset?: { dx: number; dy: number };
 }
 
 // Canvas-based grid renderer with improved visuals for all grid sizes
@@ -24,6 +25,7 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
   currentTool,
   scale = 100,
   selectedCells,
+  selectionDragOffset,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -114,6 +116,35 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
       context.stroke();
     }
 
+    // Selection drag ghost preview (semi-transparent beads at destination)
+    if (
+      selectedCells &&
+      selectedCells.size > 0 &&
+      selectionDragOffset &&
+      (selectionDragOffset.dx !== 0 || selectionDragOffset.dy !== 0)
+    ) {
+      for (const key of selectedCells) {
+        const { y, x } = parseCellKey(key);
+        const tx = x + selectionDragOffset.dx;
+        const ty = y + selectionDragOffset.dy;
+        if (tx < 0 || ty < 0 || tx >= gridSize.width || ty >= gridSize.height) continue;
+        const color = perlerPattern[y][x];
+        if (color === "transparent") continue;
+        const centerX = tx * pixelSize + pixelSize / 2;
+        const centerY = ty * pixelSize + pixelSize / 2;
+        const radius = pixelSize / 2 - 1;
+        context.beginPath();
+        context.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        context.fillStyle = color;
+        context.globalAlpha = 0.6;
+        context.fill();
+        context.globalAlpha = 1.0;
+        context.strokeStyle = "rgba(0, 0, 0, 0.2)";
+        context.lineWidth = 0.5;
+        context.stroke();
+      }
+    }
+
     // Selection highlight overlay
     if (selectedCells && selectedCells.size > 0) {
       // Use a subtle but visible highlight
@@ -134,7 +165,7 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
 
     // Restore the context state
     context.restore();
-  }, [perlerPattern, gridSize, scale, selectedCells]);
+  }, [perlerPattern, gridSize, scale, selectedCells, selectionDragOffset]);
 
   // Handle mouse events
   const getCellCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {

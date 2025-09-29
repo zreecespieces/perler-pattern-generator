@@ -21,6 +21,7 @@ interface PegboardProps {
   onPan: (direction: PanDirection) => void;
   onRecenter: () => void;
   selectedCells?: Set<string>;
+  selectionDragOffset?: { dx: number; dy: number };
 }
 
 const Pegboard: React.FC<PegboardProps> = ({
@@ -38,6 +39,7 @@ const Pegboard: React.FC<PegboardProps> = ({
   onPan,
   onRecenter,
   selectedCells,
+  selectionDragOffset,
 }) => {
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
   // Mouse handlers for dragging paint/erase
@@ -120,6 +122,7 @@ const Pegboard: React.FC<PegboardProps> = ({
           currentTool={currentTool}
           scale={scale}
           selectedCells={selectedCells}
+          selectionDragOffset={selectionDragOffset}
         />
       </Box>
 

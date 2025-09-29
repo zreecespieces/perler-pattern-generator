@@ -17,7 +17,7 @@ import { MainContent, ToolsDrawer } from "./components/Layout";
 import { toolColors } from "./utils/beadColors";
 import QRCodeDrawer from "./components/Tools/QRCodeDrawer";
 import { renderTextImageDataUrl, TextAlignOption } from "./utils/textImage";
-import { cellKey, getSameColorRegion, parseCellKey } from "./utils/selectionUtils";
+import { cellKey, getSameColorRegion, parseCellKey, getSelectionBounds } from "./utils/selectionUtils";
 
 function App() {
   // Initialize with Paint tool selected by default
@@ -40,6 +40,9 @@ function App() {
   const [selectMode, setSelectMode] = useState<SelectMode>("single");
   const [isMetaDown, setIsMetaDown] = useState(false);
   const [isCtrlDown, setIsCtrlDown] = useState(false);
+  const [isDraggingSelection, setIsDraggingSelection] = useState(false);
+  const [selectionDragOffset, setSelectionDragOffset] = useState<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
+  const dragStartRef = useRef<{ y: number; x: number } | null>(null);
 
   // Start with a reasonably sized grid for direct painting
   const initialGridSize: GridSize = { width: 29, height: 29 };
@@ -101,6 +104,62 @@ function App() {
     );
   };
 
+  // Clamp drag offset so the ghost stays within the grid
+  const clampDragOffset = useCallback(
+    (dx: number, dy: number): { dx: number; dy: number } => {
+      if (!selectedCells || selectedCells.size === 0) return { dx: 0, dy: 0 };
+      const { minY, minX, maxY, maxX } = getSelectionBounds(selectedCells);
+      const minDx = -minX;
+      const maxDx = gridSize.width - 1 - maxX;
+      const minDy = -minY;
+      const maxDy = gridSize.height - 1 - maxY;
+      const clampedDx = Math.max(minDx, Math.min(maxDx, dx));
+      const clampedDy = Math.max(minDy, Math.min(maxDy, dy));
+      return { dx: clampedDx, dy: clampedDy };
+    },
+    [selectedCells, gridSize.width, gridSize.height]
+  );
+
+  // Commit moving the selection by (dx, dy)
+  const moveSelectionBy = useCallback(
+    (dx: number, dy: number) => {
+      if (!selectedCells || selectedCells.size === 0) return;
+      if (dx === 0 && dy === 0) return;
+      // Build new pattern from the old one
+      const newPattern = JSON.parse(JSON.stringify(perlerPattern));
+      // Clear sources first
+      for (const key of selectedCells) {
+        const { y, x } = parseCellKey(key);
+        newPattern[y][x] = "transparent";
+      }
+      // Paste destinations using colors from original pattern
+      for (const key of selectedCells) {
+        const { y, x } = parseCellKey(key);
+        const ty = y + dy;
+        const tx = x + dx;
+        if (ty < 0 || tx < 0 || ty >= gridSize.height || tx >= gridSize.width) continue;
+        const color = perlerPattern[y][x];
+        if (color === "transparent") continue;
+        newPattern[ty][tx] = color;
+      }
+      setPerlerPattern(newPattern);
+      addToHistory(newPattern);
+      // Update selection to new positions
+      const nextSelection = new Set<string>();
+      for (const key of selectedCells) {
+        const { y, x } = parseCellKey(key);
+        nextSelection.add(cellKey(y + dy, x + dx));
+      }
+      setSelectedCells(nextSelection);
+      // Reset drag state
+      setSelectionDragOffset({ dx: 0, dy: 0 });
+      setIsDraggingSelection(false);
+      dragStartRef.current = null;
+    },
+    [selectedCells, perlerPattern, gridSize.height, gridSize.width, setPerlerPattern, addToHistory]
+  );
+
+
   // Recenter: shift pattern back by current panOffset and reset offset
   const handleRecenter = useCallback(() => {
     const { x, y } = panOffset;
@@ -134,6 +193,9 @@ function App() {
       if (e.key === "Control") setIsCtrlDown(true);
       if (e.key === "Escape") {
         setSelectedCells(new Set());
+        setIsDraggingSelection(false);
+        setSelectionDragOffset({ dx: 0, dy: 0 });
+        dragStartRef.current = null;
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -405,8 +467,20 @@ function App() {
   const handleMouseDown = useCallback(
     (y: number, x: number, mods?: { subtract: boolean }) => {
       if (currentTool === EditTool.SELECT) {
+        const key = cellKey(y, x);
+        const isInSelection = selectedCells.has(key);
+        const isSubtract = !!mods?.subtract;
+        if (isInSelection && !isSubtract) {
+          // Begin dragging the current selection
+          setIsMouseDown(true);
+          setIsDraggingSelection(true);
+          dragStartRef.current = { y, x };
+          setSelectionDragOffset({ dx: 0, dy: 0 });
+          return;
+        }
+        // Otherwise, modify selection (add/subtract)
         setIsMouseDown(true);
-        updateSelection(y, x, !!mods?.subtract);
+        updateSelection(y, x, isSubtract);
         return;
       }
       // Selection-aware bulk ops for erase/bucket
@@ -417,13 +491,20 @@ function App() {
       setIsMouseDown(true);
       handleCellInteraction(y, x);
     },
-    [currentTool, updateSelection, selectedCells.size, applyToolToSelection, handleCellInteraction]
+    [currentTool, selectedCells, updateSelection, applyToolToSelection, handleCellInteraction]
   );
 
   const handleMouseOver = useCallback(
     (y: number, x: number, mods?: { subtract: boolean }) => {
       if (!isMouseDown) return;
       if (currentTool === EditTool.SELECT) {
+        if (isDraggingSelection && dragStartRef.current) {
+          const dx = x - dragStartRef.current.x;
+          const dy = y - dragStartRef.current.y;
+          const clamped = clampDragOffset(dx, dy);
+          setSelectionDragOffset(clamped);
+          return;
+        }
         updateSelection(y, x, !!mods?.subtract);
         return;
       }
@@ -431,12 +512,16 @@ function App() {
         handleCellInteraction(y, x);
       }
     },
-    [isMouseDown, currentTool, updateSelection, handleCellInteraction]
+    [isMouseDown, currentTool, isDraggingSelection, clampDragOffset, updateSelection, handleCellInteraction]
   );
 
   const handleMouseUp = useCallback(() => {
     setIsMouseDown(false);
-  }, []);
+    if (isDraggingSelection) {
+      const { dx, dy } = selectionDragOffset;
+      moveSelectionBy(dx, dy);
+    }
+  }, [isDraggingSelection, selectionDragOffset, moveSelectionBy]);
 
   // Add global mouse event listeners to ensure mouseup is captured even outside the grid
   useEffect(() => {
@@ -575,6 +660,7 @@ function App() {
         onPan={handlePan}
         onRecenter={handleRecenter}
         selectedCells={selectedCells}
+        selectionDragOffset={selectionDragOffset}
       />
 
       {/* QR Code Drawer */}

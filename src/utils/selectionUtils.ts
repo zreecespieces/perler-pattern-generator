@@ -31,3 +31,21 @@ export const getSameColorRegion = (
   }
   return visited;
 };
+
+export const getSelectionBounds = (selected: Set<string>) => {
+  let minY = Infinity,
+    minX = Infinity,
+    maxY = -Infinity,
+    maxX = -Infinity;
+  for (const key of selected) {
+    const { y, x } = parseCellKey(key);
+    if (y < minY) minY = y;
+    if (x < minX) minX = x;
+    if (y > maxY) maxY = y;
+    if (x > maxX) maxX = x;
+  }
+  if (selected.size === 0) {
+    minY = minX = maxY = maxX = 0;
+  }
+  return { minY, minX, maxY, maxX };
+};
