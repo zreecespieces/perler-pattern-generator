@@ -35,7 +35,7 @@ const ToolControls: React.FC<ToolControlsProps> = ({
       <Typography variant="h6" sx={{ mb: 2 }}>
         Tools
       </Typography>
-      <Grid container spacing={2} sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}>
+      <Grid container spacing={2} sx={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start" }}>
         <Grid item xs={3}>
           <ToolButton active={currentTool === EditTool.PAINT} onClick={() => onToolChange(EditTool.PAINT)}>
             <BrushIcon />
@@ -60,7 +60,8 @@ const ToolControls: React.FC<ToolControlsProps> = ({
           <ToolButton onClick={onOpenQRCode} aria-label="QR Code">
             <QrCode2Icon />
           </ToolButton>
-
+        </Grid>
+        <Grid item xs={3}>
           <ToolButton active={currentTool === EditTool.TEXT} onClick={() => onToolChange(EditTool.TEXT)}>
             <TitleIcon />
           </ToolButton>
