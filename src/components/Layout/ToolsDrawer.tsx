@@ -27,6 +27,7 @@ interface ToolsDrawerProps {
   isSubtractSelectionActive?: boolean;
   selectMode: SelectMode;
   onSelectModeChange: (mode: SelectMode) => void;
+  overlayActive?: boolean;
 }
 
 const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
@@ -47,17 +48,22 @@ const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
   isSubtractSelectionActive = false,
   selectMode,
   onSelectModeChange,
+  overlayActive = false,
 }) => {
   const [textDrawerOpen, setTextDrawerOpen] = useState(false);
+  const prevToolRef = React.useRef<EditTool>(currentTool);
 
   // Open the text drawer automatically when Text tool is selected
   useEffect(() => {
-    if (currentTool === EditTool.TEXT) {
+    const prev = prevToolRef.current;
+    if (currentTool === EditTool.TEXT && prev !== EditTool.TEXT && !overlayActive) {
       setTextDrawerOpen(true);
-    } else {
+    }
+    if (currentTool !== EditTool.TEXT) {
       setTextDrawerOpen(false);
     }
-  }, [currentTool]);
+    prevToolRef.current = currentTool;
+  }, [currentTool, overlayActive]);
 
   return (
     <StyledToolsDrawer variant={variant} anchor="left" open={open} onClose={onClose}>
@@ -88,13 +94,12 @@ const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
         open={textDrawerOpen}
         onClose={() => {
           setTextDrawerOpen(false);
-          // Deactivate Text tool so re-clicking re-opens drawer
+          // Switch away from Text so user can re-open later
           onToolChange(EditTool.PAINT);
         }}
         onPlaceText={(text: string, align: TextAlignOption, lineHeightMul: number, kerningEm: number) => {
           onPlaceText?.(text, align, lineHeightMul, kerningEm);
-          // After placing, also switch away from Text to allow quick re-open
-          onToolChange(EditTool.PAINT);
+          // Do not switch tools; overlay placement will proceed on the board
         }}
       />
     </StyledToolsDrawer>

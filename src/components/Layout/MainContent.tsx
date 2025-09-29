@@ -54,6 +54,8 @@ interface MainContentProps {
   onRecenter: () => void;
   selectedCells?: Set<string>;
   selectionDragOffset?: { dx: number; dy: number };
+  textOverlayPattern?: string[][];
+  textOverlayTopLeft?: { x: number; y: number };
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -91,6 +93,8 @@ const MainContent: React.FC<MainContentProps> = ({
   onRecenter,
   selectedCells,
   selectionDragOffset,
+  textOverlayPattern,
+  textOverlayTopLeft,
 }) => {
   // Get list of colors used in the pattern for the replacement dialog
   const [openColorDialog, setOpenColorDialog] = useState(false);
@@ -221,6 +225,8 @@ const MainContent: React.FC<MainContentProps> = ({
           onRecenter={onRecenter}
           selectedCells={selectedCells}
           selectionDragOffset={selectionDragOffset}
+          textOverlayPattern={textOverlayPattern}
+          textOverlayTopLeft={textOverlayTopLeft}
         />
 
         <ExportControls

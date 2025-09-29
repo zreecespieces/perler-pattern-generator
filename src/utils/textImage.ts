@@ -15,9 +15,7 @@ export function renderTextImageDataUrl(
   const ctx = canvas.getContext("2d");
   if (!ctx) return "";
 
-  // Background
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, size, size);
+  // Transparent background (do not paint any background)
 
   // Choose a highly legible default font stack
   const fontStack = "600 48px Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif";

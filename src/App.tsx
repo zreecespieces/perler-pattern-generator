@@ -43,6 +43,9 @@ function App() {
   const [isDraggingSelection, setIsDraggingSelection] = useState(false);
   const [selectionDragOffset, setSelectionDragOffset] = useState<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
   const dragStartRef = useRef<{ y: number; x: number } | null>(null);
+  // Text overlay state (for click-to-place)
+  const [textOverlayPattern, setTextOverlayPattern] = useState<string[][] | null>(null);
+  const [textOverlayTopLeft, setTextOverlayTopLeft] = useState<{ x: number; y: number } | null>(null);
 
   // Start with a reasonably sized grid for direct painting
   const initialGridSize: GridSize = { width: 29, height: 29 };
@@ -196,6 +199,9 @@ function App() {
         setIsDraggingSelection(false);
         setSelectionDragOffset({ dx: 0, dy: 0 });
         dragStartRef.current = null;
+        // Cancel text overlay if active
+        setTextOverlayPattern(null);
+        setTextOverlayTopLeft(null);
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -433,10 +439,48 @@ function App() {
       if (!text.trim()) return;
       const dataUrl = renderTextImageDataUrl(text.trim(), align, lineHeightMul, kerningEm);
       if (!dataUrl) return;
-      setImage(dataUrl);
-      generatePattern(dataUrl, scale);
+      // Generate a pattern from the text image but do not apply to grid; create an overlay instead
+      generateDominantCellPattern(
+        dataUrl,
+        100, // keep crisp scale for text mask
+        gridSize,
+        (pattern: string[][]) => {
+          // Crop to bounding box of non-transparent cells
+          let minX = gridSize.width, minY = gridSize.height, maxX = -1, maxY = -1;
+          for (let y = 0; y < pattern.length; y++) {
+            for (let x = 0; x < pattern[y].length; x++) {
+              if (pattern[y][x] && pattern[y][x] !== "transparent") {
+                if (x < minX) minX = x;
+                if (y < minY) minY = y;
+                if (x > maxX) maxX = x;
+                if (y > maxY) maxY = y;
+              }
+            }
+          }
+          if (maxX < minX || maxY < minY) {
+            // Nothing to place
+            setTextOverlayPattern(null);
+            setTextOverlayTopLeft(null);
+            return;
+          }
+          const cropW = maxX - minX + 1;
+          const cropH = maxY - minY + 1;
+          const cropped: string[][] = Array.from({ length: cropH }, (_, yy) =>
+            Array.from({ length: cropW }, (_, xx) => pattern[minY + yy][minX + xx])
+          );
+          setTextOverlayPattern(cropped);
+          // Start centered
+          const startX = Math.max(0, Math.min(gridSize.width - cropW, Math.round((gridSize.width - cropW) / 2)));
+          const startY = Math.max(0, Math.min(gridSize.height - cropH, Math.round((gridSize.height - cropH) / 2)));
+          setTextOverlayTopLeft({ x: startX, y: startY });
+          // Ensure Text tool is active so hover moves overlay
+          setCurrentTool(EditTool.TEXT);
+        },
+        { multiplier: 64 }
+      );
+      // Do not set main image or pattern here
     },
-    [scale, generatePattern]
+    [gridSize]
   );
 
   // Replace all instances of one color with another in the pattern
@@ -466,6 +510,28 @@ function App() {
   // Mouse event handlers with drag painting support
   const handleMouseDown = useCallback(
     (y: number, x: number, mods?: { subtract: boolean }) => {
+      // Click-to-place Text overlay
+      if (currentTool === EditTool.TEXT && textOverlayPattern && textOverlayTopLeft) {
+        const newPattern = JSON.parse(JSON.stringify(perlerPattern));
+        for (let oy = 0; oy < textOverlayPattern.length; oy++) {
+          for (let ox = 0; ox < textOverlayPattern[oy].length; ox++) {
+            const color = textOverlayPattern[oy][ox];
+            if (!color || color === "transparent") continue;
+            const ty = textOverlayTopLeft.y + oy;
+            const tx = textOverlayTopLeft.x + ox;
+            if (ty < 0 || tx < 0 || ty >= gridSize.height || tx >= gridSize.width) continue;
+            newPattern[ty][tx] = color;
+          }
+        }
+        setPerlerPattern(newPattern);
+        addToHistory(newPattern);
+        // Switch tool away from Text so drawer doesn't auto-reopen and user can re-enter Text later
+        setCurrentTool(EditTool.PAINT);
+        // Clear overlay after placing
+        setTextOverlayPattern(null);
+        setTextOverlayTopLeft(null);
+        return;
+      }
       if (currentTool === EditTool.SELECT) {
         const key = cellKey(y, x);
         const isInSelection = selectedCells.has(key);
@@ -491,11 +557,20 @@ function App() {
       setIsMouseDown(true);
       handleCellInteraction(y, x);
     },
-    [currentTool, selectedCells, updateSelection, applyToolToSelection, handleCellInteraction]
+    [currentTool, selectedCells, updateSelection, applyToolToSelection, handleCellInteraction, perlerPattern, gridSize.height, gridSize.width, addToHistory, setPerlerPattern, textOverlayPattern, textOverlayTopLeft]
   );
 
   const handleMouseOver = useCallback(
     (y: number, x: number, mods?: { subtract: boolean }) => {
+      // Move text overlay with cursor while in Text tool
+      if (currentTool === EditTool.TEXT && textOverlayPattern) {
+        const w = textOverlayPattern[0]?.length ?? 0;
+        const h = textOverlayPattern.length;
+        const topLeftX = Math.max(0, Math.min(gridSize.width - w, x - Math.floor(w / 2)));
+        const topLeftY = Math.max(0, Math.min(gridSize.height - h, y - Math.floor(h / 2)));
+        setTextOverlayTopLeft({ x: topLeftX, y: topLeftY });
+        return;
+      }
       if (!isMouseDown) return;
       if (currentTool === EditTool.SELECT) {
         if (isDraggingSelection && dragStartRef.current) {
@@ -512,7 +587,7 @@ function App() {
         handleCellInteraction(y, x);
       }
     },
-    [isMouseDown, currentTool, isDraggingSelection, clampDragOffset, updateSelection, handleCellInteraction]
+    [isMouseDown, currentTool, isDraggingSelection, clampDragOffset, updateSelection, handleCellInteraction, textOverlayPattern, gridSize.width, gridSize.height]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -603,6 +678,7 @@ function App() {
           isSubtractSelectionActive={isMetaDown || isCtrlDown}
           selectMode={selectMode}
           onSelectModeChange={setSelectMode}
+          overlayActive={!!textOverlayPattern}
         />
       )}
       {isMobile && (
@@ -624,6 +700,7 @@ function App() {
           isSubtractSelectionActive={isMetaDown || isCtrlDown}
           selectMode={selectMode}
           onSelectModeChange={setSelectMode}
+          overlayActive={!!textOverlayPattern}
         />
       )}
       <MainContent
@@ -661,6 +738,8 @@ function App() {
         onRecenter={handleRecenter}
         selectedCells={selectedCells}
         selectionDragOffset={selectionDragOffset}
+        textOverlayPattern={textOverlayPattern ?? undefined}
+        textOverlayTopLeft={textOverlayTopLeft ?? undefined}
       />
 
       {/* QR Code Drawer */}

@@ -13,6 +13,8 @@ interface CanvasGridProps {
   scale?: number;
   selectedCells?: Set<string>;
   selectionDragOffset?: { dx: number; dy: number };
+  textOverlayPattern?: string[][];
+  textOverlayTopLeft?: { x: number; y: number };
 }
 
 // Canvas-based grid renderer with improved visuals for all grid sizes
@@ -26,6 +28,8 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
   scale = 100,
   selectedCells,
   selectionDragOffset,
+  textOverlayPattern,
+  textOverlayTopLeft,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -116,6 +120,33 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
       context.stroke();
     }
 
+    // Text overlay ghost (semi-transparent beads following cursor)
+    if (textOverlayPattern && textOverlayTopLeft) {
+      const oy = textOverlayTopLeft.y;
+      const ox = textOverlayTopLeft.x;
+      for (let y = 0; y < textOverlayPattern.length; y++) {
+        for (let x = 0; x < textOverlayPattern[y].length; x++) {
+          const color = textOverlayPattern[y][x];
+          if (!color || color === "transparent") continue;
+          const gy = oy + y;
+          const gx = ox + x;
+          if (gx < 0 || gy < 0 || gx >= gridSize.width || gy >= gridSize.height) continue;
+          const centerX = gx * pixelSize + pixelSize / 2;
+          const centerY = gy * pixelSize + pixelSize / 2;
+          const radius = pixelSize / 2 - 1;
+          context.beginPath();
+          context.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+          context.fillStyle = color;
+          context.globalAlpha = 0.6;
+          context.fill();
+          context.globalAlpha = 1.0;
+          context.strokeStyle = "rgba(0, 0, 0, 0.2)";
+          context.lineWidth = 0.5;
+          context.stroke();
+        }
+      }
+    }
+
     // Selection drag ghost preview (semi-transparent beads at destination)
     if (
       selectedCells &&
@@ -165,7 +196,7 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
 
     // Restore the context state
     context.restore();
-  }, [perlerPattern, gridSize, scale, selectedCells, selectionDragOffset]);
+  }, [perlerPattern, gridSize, scale, selectedCells, selectionDragOffset, textOverlayPattern, textOverlayTopLeft]);
 
   // Handle mouse events
   const getCellCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -214,7 +245,7 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
     if (lastCellRef.current?.x === coords.x && lastCellRef.current?.y === coords.y) return;
 
     lastCellRef.current = coords;
-    if (isMouseDownRef.current) {
+    if (isMouseDownRef.current || currentTool === EditTool.TEXT) {
       const subtract = e.metaKey || e.ctrlKey;
       onMouseOver(coords.y, coords.x, { subtract });
     }
