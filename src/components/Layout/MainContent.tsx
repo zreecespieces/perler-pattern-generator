@@ -39,8 +39,8 @@ interface MainContentProps {
   onDimensionChange: (dimension: "width" | "height", value: number) => void;
   onScaleChange: (value: number | number[]) => void;
   onScaleCommit?: (value: number) => void;
-  onCellClick: (y: number, x: number) => void;
-  onMouseOver?: (y: number, x: number) => void;
+  onCellClick: (y: number, x: number, mods?: { subtract: boolean }) => void;
+  onMouseOver?: (y: number, x: number, mods?: { subtract: boolean }) => void;
   onMouseUp?: () => void;
   onExportPng: () => void;
   onExportJson: () => void;
@@ -52,6 +52,7 @@ interface MainContentProps {
   onOpenTools?: () => void;
   onPan: (direction: PanDirection) => void;
   onRecenter: () => void;
+  selectedCells?: Set<string>;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -87,6 +88,7 @@ const MainContent: React.FC<MainContentProps> = ({
   onOpenTools,
   onPan,
   onRecenter,
+  selectedCells,
 }) => {
   // Get list of colors used in the pattern for the replacement dialog
   const [openColorDialog, setOpenColorDialog] = useState(false);
@@ -215,6 +217,7 @@ const MainContent: React.FC<MainContentProps> = ({
           scale={scale}
           onPan={onPan}
           onRecenter={onRecenter}
+          selectedCells={selectedCells}
         />
 
         <ExportControls

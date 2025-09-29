@@ -11,12 +11,13 @@ import {
 import { usePerlerPattern } from "./hooks/usePerlerPattern";
 import { exportAsJSON, exportAsPNG } from "./utils/exportUtils";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { EditTool, GridSize, PanDirection } from "./types";
+import { EditTool, GridSize, PanDirection, SelectMode } from "./types";
 import { AppContainer } from "./styles/styledComponents";
 import { MainContent, ToolsDrawer } from "./components/Layout";
 import { toolColors } from "./utils/beadColors";
 import QRCodeDrawer from "./components/Tools/QRCodeDrawer";
 import { renderTextImageDataUrl, TextAlignOption } from "./utils/textImage";
+import { cellKey, getSameColorRegion, parseCellKey } from "./utils/selectionUtils";
 
 function App() {
   // Initialize with Paint tool selected by default
@@ -34,6 +35,11 @@ function App() {
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const [qrOpen, setQROpen] = useState(false);
+  // Selection state
+  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState<SelectMode>("single");
+  const [isMetaDown, setIsMetaDown] = useState(false);
+  const [isCtrlDown, setIsCtrlDown] = useState(false);
 
   // Start with a reasonably sized grid for direct painting
   const initialGridSize: GridSize = { width: 29, height: 29 };
@@ -120,6 +126,27 @@ function App() {
       );
     }
   }, [panOffset, perlerPattern, gridSize, setPerlerPattern, addToHistory, image, scale]);
+
+  // Track modifier keys for +/- indicator on the Select tool
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Meta") setIsMetaDown(true);
+      if (e.key === "Control") setIsCtrlDown(true);
+      if (e.key === "Escape") {
+        setSelectedCells(new Set());
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Meta") setIsMetaDown(false);
+      if (e.key === "Control") setIsCtrlDown(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   // Handle panning the entire grid by one cell
   const handlePan = useCallback(
@@ -292,6 +319,52 @@ function App() {
     [perlerPattern, currentTool, currentColor, gridSize, setPerlerPattern, addToHistory]
   );
 
+  // Apply current tool to the existing selection (bulk operation)
+  const applyToolToSelection = useCallback(
+    (tool: EditTool) => {
+      if (!selectedCells || selectedCells.size === 0) return;
+      const newPattern = JSON.parse(JSON.stringify(perlerPattern));
+      if (tool === EditTool.ERASE) {
+        for (const key of selectedCells) {
+          const { y, x } = parseCellKey(key);
+          newPattern[y][x] = "transparent";
+        }
+      } else if (tool === EditTool.BUCKET) {
+        for (const key of selectedCells) {
+          const { y, x } = parseCellKey(key);
+          newPattern[y][x] = currentColor;
+        }
+      } else {
+        return;
+      }
+      setPerlerPattern(newPattern);
+      addToHistory(newPattern);
+    },
+    [selectedCells, perlerPattern, currentColor, setPerlerPattern, addToHistory]
+  );
+
+  // Update selection based on cell and mode
+  const updateSelection = useCallback(
+    (y: number, x: number, subtract: boolean) => {
+      setSelectedCells((prev) => {
+        const next = new Set(prev);
+        if (selectMode === "single") {
+          const key = cellKey(y, x);
+          if (subtract) next.delete(key);
+          else next.add(key);
+        } else {
+          const region = getSameColorRegion(perlerPattern, y, x, gridSize);
+          for (const k of region) {
+            if (subtract) next.delete(k);
+            else next.add(k);
+          }
+        }
+        return next;
+      });
+    },
+    [selectMode, perlerPattern, gridSize]
+  );
+
   // Render text into a 300x300 white image and process through the normal image pipeline
   const handlePlaceText = useCallback(
     (text: string, align: TextAlignOption = "center", lineHeightMul: number = 1.15, kerningEm: number = 0) => {
@@ -330,20 +403,35 @@ function App() {
 
   // Mouse event handlers with drag painting support
   const handleMouseDown = useCallback(
-    (y: number, x: number) => {
+    (y: number, x: number, mods?: { subtract: boolean }) => {
+      if (currentTool === EditTool.SELECT) {
+        setIsMouseDown(true);
+        updateSelection(y, x, !!mods?.subtract);
+        return;
+      }
+      // Selection-aware bulk ops for erase/bucket
+      if (selectedCells.size > 0 && (currentTool === EditTool.ERASE || currentTool === EditTool.BUCKET)) {
+        applyToolToSelection(currentTool);
+        return;
+      }
       setIsMouseDown(true);
       handleCellInteraction(y, x);
     },
-    [handleCellInteraction]
+    [currentTool, updateSelection, selectedCells.size, applyToolToSelection, handleCellInteraction]
   );
 
   const handleMouseOver = useCallback(
-    (y: number, x: number) => {
-      if (isMouseDown && (currentTool === EditTool.PAINT || currentTool === EditTool.ERASE)) {
+    (y: number, x: number, mods?: { subtract: boolean }) => {
+      if (!isMouseDown) return;
+      if (currentTool === EditTool.SELECT) {
+        updateSelection(y, x, !!mods?.subtract);
+        return;
+      }
+      if (currentTool === EditTool.PAINT || currentTool === EditTool.ERASE) {
         handleCellInteraction(y, x);
       }
     },
-    [isMouseDown, currentTool, handleCellInteraction]
+    [isMouseDown, currentTool, updateSelection, handleCellInteraction]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -427,6 +515,9 @@ function App() {
           canRedo={canRedo}
           onOpenQRCode={handleOpenQRCode}
           onPlaceText={handlePlaceText}
+          isSubtractSelectionActive={isMetaDown || isCtrlDown}
+          selectMode={selectMode}
+          onSelectModeChange={setSelectMode}
         />
       )}
       {isMobile && (
@@ -445,6 +536,9 @@ function App() {
           canRedo={canRedo}
           onOpenQRCode={handleOpenQRCode}
           onPlaceText={handlePlaceText}
+          isSubtractSelectionActive={isMetaDown || isCtrlDown}
+          selectMode={selectMode}
+          onSelectModeChange={setSelectMode}
         />
       )}
       <MainContent
@@ -480,6 +574,7 @@ function App() {
         onOpenTools={() => setMobileToolsOpen(true)}
         onPan={handlePan}
         onRecenter={handleRecenter}
+        selectedCells={selectedCells}
       />
 
       {/* QR Code Drawer */}

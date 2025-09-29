@@ -5,6 +5,7 @@ export enum EditTool {
   EYEDROPPER = "eyedropper",
   BUCKET = "bucket",
   TEXT = "text",
+  SELECT = "select",
 }
 
 export type HistoryEntry = {
@@ -18,3 +19,5 @@ export type GridSize = {
 };
 
 export type PanDirection = 'up' | 'down' | 'left' | 'right';
+
+export type SelectMode = 'single' | 'region';

@@ -8,6 +8,9 @@ import RedoIcon from "@mui/icons-material/Redo";
 import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
 import QrCode2Icon from "@mui/icons-material/QrCode2";
 import TitleIcon from "@mui/icons-material/Title";
+import SelectAllIcon from "@mui/icons-material/SelectAll";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 import { ToolButton } from "../../styles/styledComponents";
 import { EditTool } from "../../types";
 
@@ -19,6 +22,7 @@ interface ToolControlsProps {
   canUndo: boolean;
   canRedo: boolean;
   onOpenQRCode?: () => void;
+  isSubtractSelectionActive?: boolean;
 }
 
 const ToolControls: React.FC<ToolControlsProps> = ({
@@ -29,6 +33,7 @@ const ToolControls: React.FC<ToolControlsProps> = ({
   canUndo,
   canRedo,
   onOpenQRCode,
+  isSubtractSelectionActive = false,
 }) => {
   return (
     <Box sx={{ p: 2 }}>
@@ -36,6 +41,31 @@ const ToolControls: React.FC<ToolControlsProps> = ({
         Tools
       </Typography>
       <Grid container spacing={2} sx={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start" }}>
+        <Grid item xs={3}>
+          <ToolButton active={currentTool === EditTool.SELECT} onClick={() => onToolChange(EditTool.SELECT)}>
+            <Box sx={{ position: "relative", width: 24, height: 24, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <SelectAllIcon />
+              <Box
+                sx={{
+                  position: "absolute",
+                  right: -6,
+                  bottom: -6,
+                  background: "transparent",
+                  borderRadius: "50%",
+                  width: 16,
+                  height: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "text.primary",
+                }}
+                aria-hidden
+              >
+                {isSubtractSelectionActive ? <RemoveIcon sx={{ fontSize: 16 }} /> : <AddIcon sx={{ fontSize: 16 }} />}
+              </Box>
+            </Box>
+          </ToolButton>
+        </Grid>
         <Grid item xs={3}>
           <ToolButton active={currentTool === EditTool.PAINT} onClick={() => onToolChange(EditTool.PAINT)}>
             <BrushIcon />

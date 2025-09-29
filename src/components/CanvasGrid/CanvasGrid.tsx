@@ -1,15 +1,17 @@
 import React, { useRef, useEffect, memo, useCallback } from "react";
 import { GridSize, EditTool } from "../../types";
 import { Box } from "@mui/material";
+import { parseCellKey } from "../../utils/selectionUtils";
 
 interface CanvasGridProps {
   perlerPattern: string[][];
-  onMouseDown: (y: number, x: number) => void;
-  onMouseOver: (y: number, x: number) => void;
+  onMouseDown: (y: number, x: number, mods?: { subtract: boolean }) => void;
+  onMouseOver: (y: number, x: number, mods?: { subtract: boolean }) => void;
   onMouseUp: () => void;
   gridSize: GridSize;
   currentTool: EditTool;
   scale?: number;
+  selectedCells?: Set<string>;
 }
 
 // Canvas-based grid renderer with improved visuals for all grid sizes
@@ -21,6 +23,7 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
   gridSize,
   currentTool,
   scale = 100,
+  selectedCells,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -111,9 +114,27 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
       context.stroke();
     }
 
+    // Selection highlight overlay
+    if (selectedCells && selectedCells.size > 0) {
+      // Use a subtle but visible highlight
+      context.strokeStyle = "rgba(0, 200, 255, 0.9)";
+      context.lineWidth = 2;
+      for (const key of selectedCells) {
+        const { y, x } = parseCellKey(key);
+        // Draw an inset rectangle highlight per cell
+        const inset = 1.5;
+        context.strokeRect(
+          x * pixelSize + inset,
+          y * pixelSize + inset,
+          pixelSize - inset * 2,
+          pixelSize - inset * 2
+        );
+      }
+    }
+
     // Restore the context state
     context.restore();
-  }, [perlerPattern, gridSize, scale]);
+  }, [perlerPattern, gridSize, scale, selectedCells]);
 
   // Handle mouse events
   const getCellCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -150,7 +171,8 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
 
     isMouseDownRef.current = true;
     lastCellRef.current = coords;
-    onMouseDown(coords.y, coords.x);
+    const subtract = e.metaKey || e.ctrlKey;
+    onMouseDown(coords.y, coords.x, { subtract });
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -162,7 +184,8 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
 
     lastCellRef.current = coords;
     if (isMouseDownRef.current) {
-      onMouseOver(coords.y, coords.x);
+      const subtract = e.metaKey || e.ctrlKey;
+      onMouseOver(coords.y, coords.x, { subtract });
     }
   };
 
@@ -296,6 +319,8 @@ const CanvasGrid: React.FC<CanvasGridProps> = ({
         return 'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M20.71 5.63l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-3.12 3.12-1.93-1.91-1.41 1.41 1.42 1.42L3 16.25V21h4.75l8.92-8.92 1.42 1.42 1.41-1.41-1.92-1.92 3.12-3.12c.4-.4.4-1.03.01-1.42zM6.92 19L5 17.08l8.06-8.06 1.92 1.92L6.92 19z%22/%3E%3C/svg%3E") 4 20, auto';
       case EditTool.BUCKET:
         return 'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M16.56 8.94L7.62 0 6.21 1.41l2.38 2.38-5.15 5.15c-.59.59-.59 1.54 0 2.12l5.5 5.5c.29.29.68.44 1.06.44s.77-.15 1.06-.44l5.5-5.5c.59-.58.59-1.53 0-2.12zM5.21 10L10 5.21 14.79 10H5.21zM19 11.5s-2 2.17-2 3.5c0 1.1.9 2 2 2s2-.9 2-2c0-1.33-2-3.5-2-3.5z%22/%3E%3C/svg%3E") 4 20, auto';
+      case EditTool.SELECT:
+        return 'crosshair';
       case EditTool.TEXT:
         return 'text';
       default:

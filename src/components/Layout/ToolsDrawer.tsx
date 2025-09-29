@@ -3,10 +3,11 @@ import { Box, IconButton } from "@mui/material";
 import { ToolsDrawer as StyledToolsDrawer, DrawerHeader } from "../../styles/styledComponents";
 import ColorPicker from "../ColorPicker";
 import { ToolControls } from "../Controls";
-import { EditTool } from "../../types";
+import { EditTool, SelectMode } from "../../types";
 import CloseIcon from "@mui/icons-material/Close";
 import TextDrawer from "../Tools/TextDrawer";
 import type { TextAlignOption } from "../../utils/textImage";
+import SelectModeControls from "../Tools/SelectModeControls";
 
 interface ToolsDrawerProps {
   currentTool: EditTool;
@@ -23,6 +24,9 @@ interface ToolsDrawerProps {
   onClose?: () => void;
   onOpenQRCode?: () => void;
   onPlaceText?: (text: string, align: TextAlignOption, lineHeightMul: number, kerningEm: number) => void;
+  isSubtractSelectionActive?: boolean;
+  selectMode: SelectMode;
+  onSelectModeChange: (mode: SelectMode) => void;
 }
 
 const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
@@ -40,6 +44,9 @@ const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
   onClose,
   onOpenQRCode,
   onPlaceText,
+  isSubtractSelectionActive = false,
+  selectMode,
+  onSelectModeChange,
 }) => {
   const [textDrawerOpen, setTextDrawerOpen] = useState(false);
 
@@ -69,7 +76,11 @@ const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
         canUndo={canUndo}
         canRedo={canRedo}
         onOpenQRCode={onOpenQRCode}
+        isSubtractSelectionActive={isSubtractSelectionActive}
       />
+      {currentTool === EditTool.SELECT && (
+        <SelectModeControls mode={selectMode} onModeChange={onSelectModeChange} />
+      )}
       <Box sx={{ px: 2 }}>
         <ColorPicker currentColor={currentColor} beadColors={beadColors} onColorSelect={onColorSelect} />
       </Box>

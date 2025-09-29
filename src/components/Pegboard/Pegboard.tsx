@@ -13,13 +13,14 @@ interface PegboardProps {
   currentTool: EditTool;
   isMouseDown: boolean;
   setIsMouseDown: (isDown: boolean) => void;
-  onCellClick: (y: number, x: number) => void;
-  onMouseOver?: (y: number, x: number) => void;
+  onCellClick: (y: number, x: number, mods?: { subtract: boolean }) => void;
+  onMouseOver?: (y: number, x: number, mods?: { subtract: boolean }) => void;
   onMouseUp?: () => void;
   onReplaceColor?: (oldColor: string, newColor: string) => void;
   scale?: number;
   onPan: (direction: PanDirection) => void;
   onRecenter: () => void;
+  selectedCells?: Set<string>;
 }
 
 const Pegboard: React.FC<PegboardProps> = ({
@@ -36,21 +37,22 @@ const Pegboard: React.FC<PegboardProps> = ({
   scale = 100,
   onPan,
   onRecenter,
+  selectedCells,
 }) => {
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
   // Mouse handlers for dragging paint/erase
   const handleMouseDown = useCallback(
-    (y: number, x: number) => {
+    (y: number, x: number, mods?: { subtract: boolean }) => {
       setIsMouseDown(true);
-      onCellClick(y, x);
+      onCellClick(y, x, mods);
     },
     [setIsMouseDown, onCellClick]
   );
 
   const handleMouseOver = useCallback(
-    (y: number, x: number) => {
+    (y: number, x: number, mods?: { subtract: boolean }) => {
       if (onMouseOver) {
-        onMouseOver(y, x);
+        onMouseOver(y, x, mods);
       }
     },
     [onMouseOver]
@@ -117,6 +119,7 @@ const Pegboard: React.FC<PegboardProps> = ({
           onMouseUp={handleMouseUp}
           currentTool={currentTool}
           scale={scale}
+          selectedCells={selectedCells}
         />
       </Box>
 
