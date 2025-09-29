@@ -16,6 +16,7 @@ import { AppContainer } from "./styles/styledComponents";
 import { MainContent, ToolsDrawer } from "./components/Layout";
 import { toolColors } from "./utils/beadColors";
 import QRCodeDrawer from "./components/Tools/QRCodeDrawer";
+import { renderTextImageDataUrl, TextAlignOption } from "./utils/textImage";
 
 function App() {
   // Initialize with Paint tool selected by default
@@ -55,31 +56,6 @@ function App() {
 
   // Grid ref for capturing as image
   const gridRef = useRef<HTMLDivElement>(null);
-
-  // Generate pattern from image with automatic edge detection (memoized)
-  const generatePattern = useCallback(
-    (imageUrl: string, scalePercent: number) => {
-      console.log("generatePattern called - using automatic edge detection");
-
-      // Always use advanced region-based pattern generation with automatic edge detection
-      console.log("Using advanced region-based pattern generation with automatic edge detection");
-
-      generateDominantCellPattern(
-        imageUrl,
-        scalePercent,
-        gridSize,
-        (newPattern: string[][]) => {
-          if (newPattern) {
-            console.log("Dominant-per-cell pattern generated successfully");
-            setPerlerPattern(newPattern);
-            addToHistory(newPattern);
-          }
-        },
-        { offsetCellsX: panOffset.x, offsetCellsY: panOffset.y }
-      );
-    },
-    [gridSize, panOffset.x, panOffset.y, setPerlerPattern, addToHistory]
-  );
 
   // Regenerate pattern from the current image with automatic edge detection
   const regeneratePattern = () => {
@@ -237,7 +213,30 @@ function App() {
     }
   };
 
-  // generatePattern is defined above with useCallback
+  // Generate pattern from image with automatic edge detection (memoized)
+  const generatePattern = useCallback(
+    (imageUrl: string, scalePercent: number) => {
+      console.log("generatePattern called - using automatic edge detection");
+
+      // Always use advanced region-based pattern generation with automatic edge detection
+      console.log("Using advanced region-based pattern generation with automatic edge detection");
+
+      generateDominantCellPattern(
+        imageUrl,
+        scalePercent,
+        gridSize,
+        (newPattern: string[][]) => {
+          if (newPattern) {
+            console.log("Dominant-per-cell pattern generated successfully");
+            setPerlerPattern(newPattern);
+            addToHistory(newPattern);
+          }
+        },
+        { offsetCellsX: panOffset.x, offsetCellsY: panOffset.y }
+      );
+    },
+    [gridSize, panOffset.x, panOffset.y, setPerlerPattern, addToHistory]
+  );
 
   // Reset grid size back to default 29x29
   const resetGridSize = () => {
@@ -291,6 +290,18 @@ function App() {
       addToHistory(newPattern);
     },
     [perlerPattern, currentTool, currentColor, gridSize, setPerlerPattern, addToHistory]
+  );
+
+  // Render text into a 300x300 white image and process through the normal image pipeline
+  const handlePlaceText = useCallback(
+    (text: string, align: TextAlignOption = "center", lineHeightMul: number = 1.15, kerningEm: number = 0) => {
+      if (!text.trim()) return;
+      const dataUrl = renderTextImageDataUrl(text.trim(), align, lineHeightMul, kerningEm);
+      if (!dataUrl) return;
+      setImage(dataUrl);
+      generatePattern(dataUrl, scale);
+    },
+    [scale, generatePattern]
   );
 
   // Replace all instances of one color with another in the pattern
@@ -415,6 +426,7 @@ function App() {
           canUndo={canUndo}
           canRedo={canRedo}
           onOpenQRCode={handleOpenQRCode}
+          onPlaceText={handlePlaceText}
         />
       )}
       {isMobile && (
@@ -432,6 +444,7 @@ function App() {
           canUndo={canUndo}
           canRedo={canRedo}
           onOpenQRCode={handleOpenQRCode}
+          onPlaceText={handlePlaceText}
         />
       )}
       <MainContent

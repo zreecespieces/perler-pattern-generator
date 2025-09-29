@@ -1,15 +1,15 @@
-import React from 'react';
-import { Grid, Box, Typography, Button } from '@mui/material';
-import BrushIcon from '@mui/icons-material/Brush';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ColorizeIcon from '@mui/icons-material/Colorize';
-import UndoIcon from '@mui/icons-material/Undo';
-import RedoIcon from '@mui/icons-material/Redo';
-import FormatColorFillIcon from '@mui/icons-material/FormatColorFill';
-import QrCode2Icon from '@mui/icons-material/QrCode2';
-import { ToolButton } from '../../styles/styledComponents';
-import { EditTool } from '../../types';
-
+import React from "react";
+import { Grid, Box, Typography, Button } from "@mui/material";
+import BrushIcon from "@mui/icons-material/Brush";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ColorizeIcon from "@mui/icons-material/Colorize";
+import UndoIcon from "@mui/icons-material/Undo";
+import RedoIcon from "@mui/icons-material/Redo";
+import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
+import QrCode2Icon from "@mui/icons-material/QrCode2";
+import TitleIcon from "@mui/icons-material/Title";
+import { ToolButton } from "../../styles/styledComponents";
+import { EditTool } from "../../types";
 
 interface ToolControlsProps {
   currentTool: EditTool;
@@ -32,64 +32,49 @@ const ToolControls: React.FC<ToolControlsProps> = ({
 }) => {
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>Tools</Typography>
-      <Grid container spacing={2} sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        Tools
+      </Typography>
+      <Grid container spacing={2} sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}>
         <Grid item xs={3}>
-          <ToolButton
-            active={currentTool === EditTool.PAINT}
-            onClick={() => onToolChange(EditTool.PAINT)}
-          >
+          <ToolButton active={currentTool === EditTool.PAINT} onClick={() => onToolChange(EditTool.PAINT)}>
             <BrushIcon />
           </ToolButton>
         </Grid>
         <Grid item xs={3}>
-          <ToolButton
-            active={currentTool === EditTool.ERASE}
-            onClick={() => onToolChange(EditTool.ERASE)}
-          >
+          <ToolButton active={currentTool === EditTool.ERASE} onClick={() => onToolChange(EditTool.ERASE)}>
             <DeleteIcon />
           </ToolButton>
         </Grid>
         <Grid item xs={3}>
-          <ToolButton
-            active={currentTool === EditTool.EYEDROPPER}
-            onClick={() => onToolChange(EditTool.EYEDROPPER)}
-          >
+          <ToolButton active={currentTool === EditTool.EYEDROPPER} onClick={() => onToolChange(EditTool.EYEDROPPER)}>
             <ColorizeIcon />
           </ToolButton>
         </Grid>
         <Grid item xs={3}>
-          <ToolButton
-            active={currentTool === EditTool.BUCKET}
-            onClick={() => onToolChange(EditTool.BUCKET)}
-          >
+          <ToolButton active={currentTool === EditTool.BUCKET} onClick={() => onToolChange(EditTool.BUCKET)}>
             <FormatColorFillIcon />
           </ToolButton>
         </Grid>
         <Grid item xs={3}>
-          <ToolButton
-            onClick={onOpenQRCode}
-            aria-label="QR Code"
-          >
+          <ToolButton onClick={onOpenQRCode} aria-label="QR Code">
             <QrCode2Icon />
+          </ToolButton>
+
+          <ToolButton active={currentTool === EditTool.TEXT} onClick={() => onToolChange(EditTool.TEXT)}>
+            <TitleIcon />
           </ToolButton>
         </Grid>
       </Grid>
-      
-      <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>History</Typography>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-        <Button 
-          variant="outlined"
-          onClick={onUndo}
-          disabled={!canUndo}
-        >
+
+      <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+        History
+      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
+        <Button variant="outlined" onClick={onUndo} disabled={!canUndo}>
           <UndoIcon />
         </Button>
-        <Button 
-          variant="outlined"
-          onClick={onRedo}
-          disabled={!canRedo}
-        >
+        <Button variant="outlined" onClick={onRedo} disabled={!canRedo}>
           <RedoIcon />
         </Button>
       </Box>
