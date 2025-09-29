@@ -6,6 +6,7 @@ import { ToolControls } from "../Controls";
 import { EditTool } from "../../types";
 import CloseIcon from "@mui/icons-material/Close";
 import TextDrawer from "../Tools/TextDrawer";
+import type { TextAlignOption } from "../../utils/textImage";
 
 interface ToolsDrawerProps {
   currentTool: EditTool;
@@ -20,7 +21,7 @@ interface ToolsDrawerProps {
   variant?: "persistent" | "temporary";
   open?: boolean;
   onClose?: () => void;
-  onPlaceText?: (text: string, fontFamily: string) => void;
+  onPlaceText?: (text: string, align: TextAlignOption, lineHeightMul: number, kerningEm: number) => void;
 }
 
 const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
@@ -71,8 +72,16 @@ const ToolsDrawer: React.FC<ToolsDrawerProps> = ({
       </Box>
       <TextDrawer
         open={textDrawerOpen}
-        onClose={() => setTextDrawerOpen(false)}
-        onPlaceText={(text: string, font: string) => onPlaceText?.(text, font)}
+        onClose={() => {
+          setTextDrawerOpen(false);
+          // Deactivate Text tool so re-clicking re-opens drawer
+          onToolChange(EditTool.PAINT);
+        }}
+        onPlaceText={(text: string, align: TextAlignOption, lineHeightMul: number, kerningEm: number) => {
+          onPlaceText?.(text, align, lineHeightMul, kerningEm);
+          // After placing, also switch away from Text to allow quick re-open
+          onToolChange(EditTool.PAINT);
+        }}
       />
     </StyledToolsDrawer>
   );

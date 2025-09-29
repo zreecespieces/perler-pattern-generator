@@ -2,11 +2,12 @@ import React from "react";
 import { Drawer, Box, IconButton, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import TextToolPanel from "./TextToolPanel";
+import type { TextAlignOption } from "../../utils/textImage";
 
 interface TextDrawerProps {
   open: boolean;
   onClose: () => void;
-  onPlaceText: (text: string, fontFamily: string) => void;
+  onPlaceText: (text: string, align: TextAlignOption, lineHeightMul: number, kerningEm: number) => void;
 }
 
 const TextDrawer: React.FC<TextDrawerProps> = ({ open, onClose, onPlaceText }) => {
@@ -37,8 +38,8 @@ const TextDrawer: React.FC<TextDrawerProps> = ({ open, onClose, onPlaceText }) =
       </Box>
 
       <TextToolPanel
-        onPlaceText={(text, font) => {
-          onPlaceText(text, font);
+        onPlaceText={(text, align, lineHeightMul, kerningEm) => {
+          onPlaceText(text, align, lineHeightMul, kerningEm);
           onClose();
         }}
       />

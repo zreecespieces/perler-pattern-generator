@@ -8,7 +8,7 @@ import { EditTool, GridSize } from "./types";
 import { AppContainer } from "./styles/styledComponents";
 import { MainContent, ToolsDrawer } from "./components/Layout";
 import { toolColors } from "./utils/beadColors";
-import { renderTextMask } from "./utils/textUtils";
+import { renderTextImageDataUrl, TextAlignOption } from "./utils/textImage";
 
 function App() {
   // Initialize with Paint tool selected by default
@@ -99,20 +99,23 @@ function App() {
   };
 
   // Generate pattern from image with automatic edge detection
-  const generatePattern = (imageUrl: string, scalePercent: number) => {
-    console.log("generatePattern called - using automatic edge detection");
+  const generatePattern = useCallback(
+    (imageUrl: string, scalePercent: number) => {
+      console.log("generatePattern called - using automatic edge detection");
 
-    // Always use advanced region-based pattern generation with automatic edge detection
-    console.log("Using advanced region-based pattern generation with automatic edge detection");
+      // Always use advanced region-based pattern generation with automatic edge detection
+      console.log("Using advanced region-based pattern generation with automatic edge detection");
 
-    generateDominantCellPattern(imageUrl, scalePercent, gridSize, (newPattern: string[][]) => {
-      if (newPattern) {
-        console.log("Dominant-per-cell pattern generated successfully");
-        setPerlerPattern(newPattern);
-        addToHistory(newPattern);
-      }
-    });
-  };
+      generateDominantCellPattern(imageUrl, scalePercent, gridSize, (newPattern: string[][]) => {
+        if (newPattern) {
+          console.log("Dominant-per-cell pattern generated successfully");
+          setPerlerPattern(newPattern);
+          addToHistory(newPattern);
+        }
+      });
+    },
+    [gridSize, setPerlerPattern, addToHistory]
+  );
 
   // Reset grid size back to default 29x29
   const resetGridSize = () => {
@@ -166,24 +169,16 @@ function App() {
     [perlerPattern, currentTool, currentColor, gridSize, setPerlerPattern, addToHistory]
   );
 
-  // Place text onto the grid using the current color. Text is centered and scaled to fit the grid.
+  // Render text into a 300x300 white image and process through the normal image pipeline
   const handlePlaceText = useCallback(
-    (text: string, fontFamily: string) => {
-      // SDF-based renderer has optimal defaults baked in; just call it.
-      const mask = renderTextMask(text, fontFamily, gridSize);
-      // Create a deep copy
-      const newPattern = JSON.parse(JSON.stringify(perlerPattern)) as string[][];
-      for (let y = 0; y < mask.length; y++) {
-        for (let x = 0; x < mask[y].length; x++) {
-          if (mask[y][x]) {
-            newPattern[y][x] = currentColor;
-          }
-        }
-      }
-      setPerlerPattern(newPattern);
-      addToHistory(newPattern);
+    (text: string, align: TextAlignOption = "center", lineHeightMul: number = 1.15, kerningEm: number = 0) => {
+      if (!text.trim()) return;
+      const dataUrl = renderTextImageDataUrl(text.trim(), align, lineHeightMul, kerningEm);
+      if (!dataUrl) return;
+      setImage(dataUrl);
+      generatePattern(dataUrl, scale);
     },
-    [perlerPattern, gridSize, currentColor, setPerlerPattern, addToHistory]
+    [scale, generatePattern]
   );
 
   // Replace all instances of one color with another in the pattern
